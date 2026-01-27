@@ -481,3 +481,330 @@ Design comprehensive Domain Driven Design (DDD) domain models for each software 
 2. `/construction/analytics_service/domain_model.md` - Complete DDD domain model
 3. `/construction/web_app/domain_model.md` - Domain model or documentation of presentation layer
 4. `/construction/integration_patterns.md` - Cross-context integration patterns
+
+---
+
+# Plan: Logical Design - Event-Driven System Architecture
+
+## Overview
+Create logical design for highly scalable, event-driven system implementation based on the Domain Driven Design domain models and integration contracts. Focus on software architecture, component design, and system interactions without generating code snippets.
+
+## Steps
+
+### Phase 1: Architecture Analysis and Design Decisions
+
+- [x] **Step 1.1**: Analyze domain models and integration contracts to identify:
+  - Event-driven architecture requirements
+  - Scalability patterns needed
+  - Technology stack implications
+  - Cross-cutting concerns
+
+- [x] **Step 1.2**: Define architectural decisions and patterns:
+  - [Question] What event streaming platform should we use for event-driven architecture? Options: Apache Kafka, Azure Event Hubs, AWS EventBridge, or simple HTTP webhooks?
+  - [Answer] Simple HTTP webhooks
+  
+  - [Question] What database technology should we use for each service? Options: PostgreSQL, MongoDB, Azure Cosmos DB, or different databases per service?
+  - [Answer] PostgreSQL
+  
+  - [Question] Should we implement CQRS (Command Query Responsibility Segregation) pattern for better scalability, especially for Analytics Service?
+  - [Answer] Not needed
+  
+  - [Question] What caching strategy should we implement? Options: Redis, in-memory caching, or no caching?
+  - [Answer] No caching
+  
+  - [Question] Should we use containerization (Docker/Kubernetes) for deployment and scalability?
+  - [Answer] Not needed, on-premises deployment is sufficient
+  
+  - [Question] What API Gateway pattern should we implement for cross-cutting concerns (authentication, rate limiting, etc.)?
+  - [Answer] Regular function calls 
+
+### Phase 2: Card Service Unit Logical Design
+
+- [x] **Step 2.1**: Design Card Service architecture components:
+  - Application layer (API controllers, command handlers)
+  - Domain layer (aggregates, services, repositories)
+  - Infrastructure layer (persistence, external services, event publishing)
+  - Cross-cutting concerns (logging, monitoring, security)
+
+- [x] **Step 2.2**: Design event-driven components:
+  - Event publishers and event store
+  - Event handlers for milestone tracking
+  - Integration with Teams Channel
+  - Asynchronous processing patterns
+
+- [x] **Step 2.3**: Design scalability patterns:
+  - Database sharding/partitioning strategy
+  - Caching layers and cache invalidation
+  - Load balancing and horizontal scaling
+  - Performance optimization patterns
+
+- [x] **Step 2.4**: Create `/construction/card_service/logical_design.md` with:
+  - System architecture diagram
+  - Component design and responsibilities
+  - Event flow diagrams
+  - Database design and data access patterns
+  - API design and endpoint specifications
+  - Scalability and performance considerations
+  - Security implementation details
+  - Monitoring and observability design
+
+### Phase 3: Analytics Service Unit Logical Design
+
+- [x] **Step 3.1**: Design Analytics Service architecture components:
+  - Application layer (API controllers, query handlers)
+  - Domain layer (domain services, value objects)
+  - Infrastructure layer (data access, external integrations)
+  - Analytics computation engine
+
+- [x] **Step 3.2**: Design analytics-specific patterns:
+  - Read-only data access patterns
+  - On-demand computation vs pre-aggregation
+  - Large dataset handling and streaming
+  - Export generation and file management
+
+- [x] **Step 3.3**: Design performance optimization:
+  - Query optimization strategies
+  - Caching for analytics results
+  - Database read replicas
+  - Async processing for large operations
+
+- [x] **Step 3.4**: Create `/construction/analytics_service/logical_design.md` with:
+  - System architecture diagram
+  - Component design and responsibilities
+  - Data flow diagrams for analytics
+  - Database access patterns and optimization
+  - API design for analytics endpoints
+  - Performance and scalability considerations
+  - Security and access control implementation
+
+### Phase 4: Web App Unit Logical Design
+
+- [x] **Step 4.1**: Design Web App architecture components:
+  - Frontend application structure
+  - State management architecture
+  - API integration layer
+  - Component hierarchy and design patterns
+
+- [x] **Step 4.2**: Design user experience patterns:
+  - Responsive design architecture
+  - Real-time updates and notifications
+  - Error handling and retry mechanisms
+  - Progressive loading and caching
+
+- [x] **Step 4.3**: Design integration patterns:
+  - API client design and error handling
+  - Authentication and authorization flow
+  - Cross-service communication patterns
+  - Offline capability considerations
+
+- [x] **Step 4.4**: Create `/construction/web_app/logical_design.md` with:
+  - Frontend architecture diagram
+  - Component design and organization
+  - State management patterns
+  - API integration architecture
+  - User experience flow diagrams
+  - Performance optimization strategies
+  - Security implementation in frontend
+
+### Phase 5: Cross-Service Integration Design
+
+- [ ] **Step 5.1**: Design event-driven integration patterns:
+  - Event schema design and versioning
+  - Event routing and delivery guarantees
+  - Event sourcing patterns (if applicable)
+  - Saga patterns for distributed transactions
+
+- [ ] **Step 5.2**: Design API integration patterns:
+  - API gateway configuration
+  - Service discovery mechanisms
+  - Circuit breaker and retry patterns
+  - Rate limiting and throttling
+
+- [ ] **Step 5.3**: Design data consistency patterns:
+  - Eventual consistency handling
+  - Conflict resolution strategies
+  - Data synchronization mechanisms
+  - Backup and disaster recovery
+
+- [ ] **Step 5.4**: Update integration patterns in existing `/construction/integration_patterns.md`:
+  - Add logical design details
+  - Include technology-specific implementations
+  - Add deployment and operational considerations
+
+### Phase 6: Infrastructure and Deployment Design
+
+- [ ] **Step 6.1**: Design infrastructure architecture:
+  - [Question] What cloud platform should we target? Options: Azure, AWS, Google Cloud, or on-premises?
+  - [Answer] On-premises
+  
+  - [Question] Should we use Infrastructure as Code (IaC) tools like Terraform or ARM templates?
+  - [Answer] Not needed
+  
+  - [Question] What CI/CD pipeline tools should we use? Options: Azure DevOps, GitHub Actions, Jenkins?
+  - [Answer] Not needed 
+
+- [ ] **Step 6.2**: Design deployment patterns:
+  - Containerization strategy
+  - Orchestration platform (Kubernetes, Docker Swarm)
+  - Blue-green deployment patterns
+  - Auto-scaling configurations
+
+- [ ] **Step 6.3**: Design monitoring and observability:
+  - Logging aggregation and analysis
+  - Metrics collection and alerting
+  - Distributed tracing implementation
+  - Health check and monitoring endpoints
+
+- [ ] **Step 6.4**: Create `/construction/infrastructure_design.md` with:
+  - Infrastructure architecture diagrams
+  - Deployment pipeline design
+  - Monitoring and observability architecture
+  - Security and compliance considerations
+  - Disaster recovery and backup strategies
+
+### Phase 7: Security and Compliance Design
+
+- [ ] **Step 7.1**: Design authentication and authorization:
+  - Azure AD/Teams integration patterns
+  - JWT token handling and validation
+  - Role-based access control implementation
+  - API security patterns
+
+- [ ] **Step 7.2**: Design data protection:
+  - Encryption at rest and in transit
+  - Personal data handling (GDPR compliance)
+  - Audit logging and compliance
+  - Data retention policies
+
+- [ ] **Step 7.3**: Design security monitoring:
+  - Security event logging
+  - Threat detection patterns
+  - Incident response procedures
+  - Vulnerability management
+
+- [ ] **Step 7.4**: Create `/construction/security_design.md` with:
+  - Security architecture overview
+  - Authentication and authorization flows
+  - Data protection implementation
+  - Security monitoring and incident response
+  - Compliance and audit considerations
+
+### Phase 8: Performance and Scalability Design
+
+- [ ] **Step 8.1**: Design performance optimization:
+  - Database indexing strategies
+  - Query optimization patterns
+  - Caching layers and strategies
+  - CDN and static asset optimization
+
+- [ ] **Step 8.2**: Design scalability patterns:
+  - Horizontal scaling strategies
+  - Load balancing configurations
+  - Database sharding and partitioning
+  - Microservices communication patterns
+
+- [ ] **Step 8.3**: Design capacity planning:
+  - Resource utilization monitoring
+  - Auto-scaling triggers and policies
+  - Performance testing strategies
+  - Capacity forecasting models
+
+- [ ] **Step 8.4**: Create `/construction/performance_design.md` with:
+  - Performance architecture overview
+  - Scalability patterns and implementations
+  - Capacity planning and monitoring
+  - Performance testing and optimization strategies
+
+### Phase 9: Review and Validation
+
+- [ ] **Step 9.1**: Review all logical designs for:
+  - Consistency with domain models
+  - Alignment with integration contracts
+  - Scalability and performance requirements
+  - Security and compliance requirements
+  - Operational and maintenance considerations
+
+- [ ] **Step 9.2**: Validate designs against requirements:
+  - All user stories can be implemented
+  - Non-functional requirements are addressed
+  - Integration patterns are complete
+  - Technology choices are justified
+
+- [ ] **Step 9.3**: Create implementation roadmap:
+  - Development phases and priorities
+  - Dependencies between components
+  - Risk mitigation strategies
+  - Success criteria and metrics
+
+- [ ] **Step 9.4**: Present final logical designs for approval
+
+---
+
+## Key Architectural Principles to Follow
+
+### Event-Driven Architecture
+- **Event Sourcing**: Consider for audit trail and replay capabilities
+- **CQRS**: Separate read and write models for scalability
+- **Eventual Consistency**: Handle distributed system consistency
+- **Event Versioning**: Support schema evolution
+
+### Scalability Patterns
+- **Horizontal Scaling**: Design for scale-out rather than scale-up
+- **Stateless Services**: Enable easy scaling and load balancing
+- **Database Scaling**: Implement sharding, read replicas, caching
+- **Async Processing**: Use queues and background processing
+
+### Microservices Patterns
+- **Service Boundaries**: Align with bounded contexts
+- **API Gateway**: Centralize cross-cutting concerns
+- **Service Discovery**: Dynamic service location
+- **Circuit Breaker**: Handle service failures gracefully
+
+### Security Patterns
+- **Zero Trust**: Verify every request and user
+- **Defense in Depth**: Multiple layers of security
+- **Least Privilege**: Minimal required permissions
+- **Security by Design**: Built-in security from the start
+
+---
+
+## Technology Considerations
+
+### Backend Technologies
+- **Programming Language**: Go
+- **Database**: PostgreSQL (Gorm framework)
+- **Caching**: In-memory caching
+- **API Framework**: REST (Gin framework)
+
+### Frontend Technologies
+- **Framework**: React
+- **State Management**: Zustand
+- **Build Tools**: Vite
+- **Testing**: Jest
+
+### Infrastructure Technologies
+- **Cloud Platform**: Azure, AWS, Google Cloud
+- **Containerization**: Docker, Kubernetes
+- **CI/CD**: Azure DevOps, GitHub Actions, Jenkins
+- **Monitoring**: Application Insights, Prometheus, Grafana
+
+---
+
+## Deliverables
+1. `/construction/card_service/logical_design.md` - Complete logical design
+2. `/construction/analytics_service/logical_design.md` - Complete logical design
+3. `/construction/web_app/logical_design.md` - Complete logical design
+4. `/construction/infrastructure_design.md` - Infrastructure and deployment design
+5. `/construction/security_design.md` - Security and compliance design
+6. `/construction/performance_design.md` - Performance and scalability design
+7. Updated `/construction/integration_patterns.md` - Enhanced with logical design details
+
+---
+
+## Notes
+- NO code snippets will be generated (as per requirements)
+- Focus on logical architecture and design patterns
+- Include detailed diagrams using text-based formats
+- Document all architectural decisions and trade-offs
+- Ensure designs support all user stories and requirements
+- Consider operational aspects (monitoring, deployment, maintenance)
