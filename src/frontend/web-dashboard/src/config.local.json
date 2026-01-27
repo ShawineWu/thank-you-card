@@ -1,0 +1,9 @@
+{
+  "REACT_APP_ENV": "local",
+  "CLIENT_ID": "cowboy-test",
+  "AUTH_SERVER": "https://hydra-test.castlery.com",
+  "PLAT_UMS_SERVER": "https://plat-ums-api-test.cslr.io",
+  "LOGIN_CALLBACK_URL": "http://localhost:3000/callback",
+  "LOGOUT_CALLBACK_URL": "http://localhost:3000/",
+  "API_BASE_URL": "http://localhost:8080"
+}
