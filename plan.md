@@ -89,3 +89,99 @@ Should there be any limitations on sending cards? (e.g., maximum cards per day/w
 ---
 
 **Status**: ✅ Complete - All user stories have been created and documented in /inception/user_stories.md
+
+
+---
+
+# Plan: Grouping User Stories into Independent Units
+
+## Overview
+Analyze user stories from `/inception/user_stories.md` and group them into loosely coupled, highly cohesive units that can be built independently by separate teams.
+
+## Steps
+
+### Phase 1: Analysis and Planning
+- [ ] **Step 1.1**: Analyze all user stories and identify natural boundaries based on:
+  - Functional domains (card creation, analytics, notifications, etc.)
+  - Platform boundaries (Teams Channel vs Web App)
+  - User roles (Employee vs HR Admin)
+  - Data dependencies and coupling
+
+- [ ] **Step 1.2**: Propose unit groupings with rationale
+  - [Question] Should the Teams Channel integration be a separate unit from the Web App, or should they be combined based on functional domains?
+  - [Answer] 
+  
+  - [Question] Should HR Analytics be a completely separate unit/service, or part of the main Web App unit?
+  - [Answer] 
+  
+  - [Question] For the MVP scope, should we include "Could Have" priority stories (US-1.4: Share cards, US-6.1: Milestones) in the units, or focus only on "Must Have" and "Should Have"?
+  - [Answer] 
+  
+  - [Question] Should notification functionality (US-1.3) be part of the Teams Channel unit or a separate Notification Service unit?
+  - [Answer] 
+
+### Phase 2: Unit Definition
+- [ ] **Step 2.1**: Create `/inception/units/` folder structure
+
+- [ ] **Step 2.2**: For each identified unit, create individual `.md` files containing:
+  - Unit name and description
+  - Relevant user stories with full acceptance criteria
+  - Dependencies on other units
+  - Key responsibilities
+
+### Phase 3: Integration Contract
+- [ ] **Step 3.1**: Identify all inter-unit communication points
+
+- [ ] **Step 3.2**: Define API endpoints for each unit:
+  - HTTP methods (GET, POST, PUT, DELETE)
+  - Endpoint paths
+  - Request/response schemas
+  - Authentication requirements
+
+- [ ] **Step 3.3**: Create `/inception/units/integration_contract.md` with:
+  - API specifications for each unit
+  - Data models shared across units
+  - Event/notification contracts (if applicable)
+  - Synchronization requirements between Teams and Web App
+
+### Phase 4: Review and Finalization
+- [ ] **Step 4.1**: Review all unit files for completeness and consistency
+
+- [ ] **Step 4.2**: Validate that units are:
+  - Loosely coupled (minimal dependencies)
+  - Highly cohesive (related functionality grouped together)
+  - Independently buildable and deployable
+
+- [ ] **Step 4.3**: Present final unit structure for approval
+
+## Initial Unit Proposal (Pending Clarification)
+
+Based on initial analysis, here are potential unit groupings:
+
+### Option A: Platform-Based Separation
+1. **Teams Channel Integration Unit** - All Teams-specific features
+2. **Web App Core Unit** - Card creation, personal views, interactions
+3. **HR Analytics Unit** - All HR dashboard and reporting features
+4. **Notification Service Unit** (Optional) - Cross-platform notifications
+
+### Option B: Domain-Based Separation
+1. **Card Management Unit** - Card creation, viewing, filtering (both platforms)
+2. **Recognition Analytics Unit** - Personal stats, Top 10, HR analytics
+3. **Teams Integration Unit** - Teams channel feed, notifications, sharing
+4. **Interaction Unit** - Emoji reactions, search, filters
+
+### Option C: Hybrid Approach
+1. **Card Service Unit** - Core card CRUD operations, storage
+2. **Teams Channel Unit** - Teams-specific UI and integration
+3. **Web App Unit** - Web application UI and features
+4. **Analytics Service Unit** - All analytics, reporting, exports for both platforms
+
+[Question] Which unit grouping approach (A, B, C, or a different approach) would you prefer? Please consider your team structure, deployment preferences, and technical architecture.
+[Answer] 
+
+---
+
+## Notes
+- All "Future Enhancement" stories (Epic 7) will be documented but marked as out of scope for current unit planning
+- Integration contracts will focus on REST APIs unless event-driven architecture is preferred
+- Emoji reaction synchronization between Teams and Web App will require careful contract definition
