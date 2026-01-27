@@ -1,182 +1,176 @@
-# Thank You Card System
+# Thank You Card - Employee Recognition System
 
-An internal employee recognition system that enables sending thank-you cards aligned with company values, with public display and HR analytics capabilities.
+Internal employee recognition system that enables employees to send public digital thank-you cards to colleagues, displays them in a company-wide feed, and provides HR analytics capabilities.
+
+## Tech Stack
+
+### Backend
+- Go 1.22+
+- Gin (HTTP framework)
+- Gorm (ORM)
+- PostgreSQL
+
+### Frontend
+- React 18 + TypeScript
+- Vite
+- Tailwind CSS
+- shadcn/ui
+- React Query
+- Recharts
+
+## Quick Start
+
+### Prerequisites
+
+- Go 1.22+
+- Node.js 18+
+- PostgreSQL (running locally)
+- Make
+
+### Database Setup
+
+The project expects PostgreSQL to be running with:
+- **Database**: `thankyoucard`
+- **User**: `postgres`
+- **Host**: `localhost`
+- **Port**: `5432`
+- **Password**: `123456`
+
+### One-Command Setup
+
+```bash
+# Complete setup (installs dependencies, initializes DB)
+make setup
+```
+
+### Development
+
+**Terminal 1 - Backend:**
+```bash
+make backend-dev
+```
+
+**Terminal 2 - Frontend:**
+```bash
+make frontend-dev
+```
+
+Then open http://localhost:3000 in your browser.
+
+**Note:** Backend runs on port 8056, frontend on port 3000.
+
+## Makefile Commands
+
+### Quick Start
+- `make setup` - Complete setup for new developers
+- `make start` - Initialize database and show instructions
+- `make dev-full` - Start backend (frontend needs separate terminal)
+
+### Backend
+- `make backend-dev` - Start backend development server
+- `make backend-build` - Build backend binary
+- `make backend-run` - Build and run backend
+
+### Frontend
+- `make frontend-install` - Install frontend dependencies
+- `make frontend-dev` - Start frontend development server
+- `make frontend-build` - Build frontend for production
+
+### Database
+- `make db-init` - Initialize database (create if not exists)
+- `make db-reset` - Reset database (WARNING: drops database)
+
+### Utilities
+- `make clean` - Clean build artifacts
+- `make help` - Show all available commands
 
 ## Project Structure
 
 ```
-├── backend/                 # Go backend service
-│   ├── cmd/server/         # Application entry point
-│   ├── internal/           # Internal application code
-│   │   ├── domain/         # Domain models and business logic
-│   │   ├── application/    # Application services
-│   │   ├── infrastructure/ # External integrations
-│   │   └── presentation/   # HTTP handlers and routes
-│   ├── pkg/               # Shared packages
-│   ├── migrations/        # Database migration files
-│   └── scripts/           # Build and deployment scripts
-├── frontend/              # React frontend application
+.
+├── backend/              # Go backend
+│   ├── cmd/server/      # Application entrypoint
+│   ├── db/              # Database migrations and seeding
+│   ├── internal/        # Internal packages
+│   │   ├── handlers/    # HTTP handlers
+│   │   ├── models/      # Data models
+│   │   ├── repositories/# Data access layer
+│   │   ├── services/    # Business logic
+│   │   └── router/      # Route configuration
+│   └── script/          # Database scripts
+├── frontend/            # React frontend
 │   ├── src/
-│   │   ├── components/    # Reusable UI components
-│   │   ├── pages/         # Page components
-│   │   ├── stores/        # Zustand state management
-│   │   ├── services/      # API and external services
-│   │   ├── hooks/         # Custom React hooks
-│   │   ├── utils/         # Utility functions
-│   │   └── types/         # TypeScript type definitions
-│   └── tests/             # Frontend tests
-├── construction/          # Design documents
-├── inception/             # Requirements and user stories
-└── docs/                  # Additional documentation
+│   │   ├── components/  # React components
+│   │   ├── pages/       # Page components
+│   │   ├── services/    # API services
+│   │   └── types/       # TypeScript types
+│   └── public/
+└── Makefile            # Build and run commands
 ```
 
-## Technology Stack
+## Features
 
-### Backend
-- **Language**: Go 1.21
-- **Framework**: Gin (HTTP router)
-- **Database**: PostgreSQL with GORM
-- **Architecture**: Domain-Driven Design with Clean Architecture
+### For All Employees
+- Create and send thank-you cards
+- View company-wide feed
+- View personal received/sent cards
+- Personal statistics dashboard
+- Top 10 recognized employees
 
-### Frontend
-- **Framework**: React 19 with TypeScript
-- **Build Tool**: Vite (Rolldown)
-- **State Management**: Zustand
-- **HTTP Client**: Axios
-- **Testing**: Jest with Testing Library
-
-## Getting Started
-
-### Prerequisites
-- Go 1.21 or higher
-- Node.js 18 or higher
-- PostgreSQL 13 or higher
-
-### Backend Setup
-
-1. Navigate to the backend directory:
-   ```bash
-   cd backend
-   ```
-
-2. Copy environment configuration:
-   ```bash
-   cp .env.example .env
-   ```
-
-3. Update database configuration in `.env`
-
-4. Install dependencies:
-   ```bash
-   go mod tidy
-   ```
-
-5. Run the server:
-   ```bash
-   go run cmd/server/main.go
-   ```
-
-The backend will be available at `http://localhost:8080`
-
-### Frontend Setup
-
-1. Navigate to the frontend directory:
-   ```bash
-   cd frontend
-   ```
-
-2. Copy environment configuration:
-   ```bash
-   cp .env.example .env
-   ```
-
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-4. Start the development server:
-   ```bash
-   npm run dev
-   ```
-
-The frontend will be available at `http://localhost:5173`
-
-### Database Setup
-
-1. Create a PostgreSQL database named `thank_you_card`
-2. Update the database configuration in `backend/.env`
-3. The application will automatically run migrations on startup
+### For HR Administrators
+- Analytics dashboard
+- Most active recognizers
+- Team recognition patterns
+- Company values distribution
+- CSV export functionality
 
 ## API Endpoints
 
-### Health Check
-- `GET /health` - Basic health check
+### Cards
+- `POST /api/cards` - Create a card
+- `GET /api/cards/feed` - Get company feed
+- `GET /api/cards/me/received` - Get received cards
+- `GET /api/cards/me/sent` - Get sent cards
+- `GET /api/cards/me/stats` - Get personal stats
+- `GET /api/cards/top-recipients` - Get top 10 employees
 
-### Cards (Planned)
-- `POST /api/v1/cards` - Create a new card
-- `GET /api/v1/cards` - Get company-wide card feed
-- `GET /api/v1/cards/{id}` - Get specific card
-- `GET /api/v1/cards/received` - Get received cards
-- `GET /api/v1/cards/sent` - Get sent cards
+### Reactions
+- `POST /api/cards/:id/reactions` - Add reaction
+- `DELETE /api/cards/:id/reactions` - Remove reaction
 
-### Analytics (Planned)
-- `GET /api/v1/analytics/dashboard` - Analytics dashboard
+### HR Analytics (requires HR admin)
+- `GET /api/analytics/dashboard` - Dashboard overview
+- `GET /api/analytics/recognizers` - Most active recognizers
+- `GET /api/analytics/teams` - Team patterns
+- `GET /api/analytics/values` - Values distribution
+- `GET /api/analytics/export` - Export CSV
 
-## Development Status
+## Environment Variables
 
-### ✅ Completed (Phase 1)
-- [x] Project structure and monorepo setup
-- [x] Backend development environment (Go, Gin, GORM, PostgreSQL)
-- [x] Frontend development environment (React, Vite, TypeScript, Zustand)
-- [x] Database schema and migrations
-- [x] Basic API structure and health checks
-- [x] Company values and credos seeding
+### Backend (.env)
+```env
+DATABASE_DSN=postgres://postgres:123456@localhost:5432/thankyoucard?sslmode=disable
+PORT=8056
+MOCK_USER_ID=1
+```
 
-### 🚧 In Progress (Phase 2)
-- [ ] Card Service domain layer implementation
-- [ ] Card Service infrastructure layer
-- [ ] Card Service application layer
-- [ ] Card Service presentation layer (REST API)
+### Frontend (.env)
+```env
+VITE_API_BASE_URL=http://localhost:8056/api
+VITE_MOCK_USER_ID=1
+```
 
-### 📋 Planned
-- [ ] Analytics Service implementation
-- [ ] Frontend UI components and pages
-- [ ] Event-driven integration with Teams
-- [ ] Authentication and authorization
-- [ ] Testing and quality assurance
-- [ ] Deployment and monitoring
+## Database
 
-## Company Values & Credos
+The backend automatically:
+1. Creates all tables via Gorm AutoMigrate
+2. Seeds company values/credos
+3. Seeds mock employees (ID: 1 = regular, ID: 2 = HR admin)
 
-The system includes 15 predefined company values and credos:
+## Testing HR Features
 
-**Values:**
-- Make an Impact
-- Strive for Excellence
-- Stand Together
-- Be Open-Minded
-- Stay Grounded
-
-**Credos:**
-- Bias for Action
-- Customer Centric
-- Think Strategically
-- Deep Dive
-- Invent and Simplify
-- Earn Trust
-- Take Ownership
-- Challenge, Disagree, and Commit
-- Learn and Be Curious
-- Do More with Less
-
-## Contributing
-
-1. Follow the established project structure
-2. Use conventional commit messages
-3. Ensure all tests pass before submitting
-4. Update documentation as needed
+To test HR admin features, set `MOCK_USER_ID=2` in backend `.env` file.
 
 ## License
 
-Internal company project - All rights reserved.
+Internal use only.

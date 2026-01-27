@@ -1,34 +1,38 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import Layout from './components/Layout'
+import FeedPage from './pages/Feed/FeedPage'
+import CreateCardPage from './pages/CreateCard/CreateCardPage'
+import MyCardsPage from './pages/MyCards/MyCardsPage'
+import StatsPage from './pages/Stats/StatsPage'
+import TopEmployeesPage from './pages/TopEmployees/TopEmployeesPage'
+import AnalyticsLayout from './pages/Analytics/AnalyticsLayout'
+import DashboardPage from './pages/Analytics/DashboardPage'
+import RecognizersPage from './pages/Analytics/RecognizersPage'
+import TeamPatternsPage from './pages/Analytics/TeamPatternsPage'
+import ValuesDistributionPage from './pages/Analytics/ValuesDistributionPage'
+import CompanyValuesPage from './pages/CompanyValues/CompanyValuesPage'
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<FeedPage />} />
+          <Route path="create" element={<CreateCardPage />} />
+          <Route path="my-cards" element={<MyCardsPage />} />
+          <Route path="stats" element={<StatsPage />} />
+          <Route path="top-employees" element={<TopEmployeesPage />} />
+          <Route path="company-values" element={<CompanyValuesPage />} />
+          <Route path="analytics" element={<AnalyticsLayout />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="recognizers" element={<RecognizersPage />} />
+            <Route path="teams" element={<TeamPatternsPage />} />
+            <Route path="values" element={<ValuesDistributionPage />} />
+          </Route>
+        </Route>
+      </Routes>
+    </BrowserRouter>
   )
 }
 

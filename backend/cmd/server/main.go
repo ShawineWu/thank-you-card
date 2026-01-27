@@ -2,75 +2,49 @@ package main
 
 import (
 	"log"
-	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
 
-	"github.com/gin-gonic/gin"
-	"github.com/company/thank-you-card/internal/container"
-	"github.com/company/thank-you-card/internal/presentation/routes"
-	"github.com/company/thank-you-card/pkg/config"
-	"github.com/company/thank-you-card/pkg/database"
-	"github.com/company/thank-you-card/pkg/logger"
+	"github.com/joho/godotenv"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+
+	appdb "thank-you-card-backend/db"
+	"thank-you-card-backend/internal/router"
 )
 
-func main() {
-	// Load configuration
-	cfg := config.Load()
-	
-	// Initialize logger
-	logger.Init(cfg.LogLevel)
-	logger.Info("Starting Thank You Card API server...")
-	
-	// Initialize database
-	if err := database.Initialize(cfg); err != nil {
-		log.Fatal("Failed to initialize database:", err)
-	}
-	
-	// Create dependency injection container
-	appContainer := container.NewContainer(cfg, database.GetDB())
-	
-	// Start background processing
-	appContainer.StartBackgroundProcessing()
-	logger.Info("Background job processing started")
-	
-	// Initialize Gin router
-	router := gin.Default()
-	
-	// Setup routes with handlers from container
-	routes.SetupRoutes(
-		router,
-		appContainer.CardHandler,
-		appContainer.EmployeeHandler,
-		appContainer.MilestoneHandler,
-	)
-	
-	// Setup graceful shutdown
-	setupGracefulShutdown(appContainer)
-	
-	// Start server
-	logger.Info("Starting server on port", cfg.Port)
-	if err := http.ListenAndServe(":"+cfg.Port, router); err != nil {
-		log.Fatal("Failed to start server:", err)
-	}
-}
+// simple DB bootstrap for now; models & router will be wired later
 
-// setupGracefulShutdown sets up graceful shutdown handling
-func setupGracefulShutdown(container *container.Container) {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	
-	go func() {
-		<-c
-		logger.Info("Shutting down gracefully...")
-		
-		// Stop background processing
-		container.StopBackgroundProcessing()
-		logger.Info("Background job processing stopped")
-		
-		// Additional cleanup can be added here
-		
-		os.Exit(0)
-	}()
+func main() {
+	_ = godotenv.Load()
+
+	dsn := os.Getenv("DATABASE_DSN")
+	if dsn == "" {
+		log.Fatal("DATABASE_DSN is not set")
+	}
+
+	gormDB, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		log.Fatalf("failed to connect database: %v", err)
+	}
+
+	if err := appdb.AutoMigrateAndSeed(gormDB); err != nil {
+		log.Fatalf("failed to migrate database: %v", err)
+	}
+
+	sqlDB, err := gormDB.DB()
+	if err != nil {
+		log.Fatalf("failed to get sql.DB: %v", err)
+	}
+	defer sqlDB.Close()
+
+	r := router.SetupRouter(gormDB)
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	if err := r.Run(":" + port); err != nil {
+		log.Fatalf("failed to run server: %v", err)
+	}
 }

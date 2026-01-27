@@ -1,73 +1,117 @@
-# React + TypeScript + Vite
+# Thank You Card Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + TypeScript + Vite frontend for the Thank You Card employee recognition system.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React 18** with TypeScript
+- **Vite** for fast development and building
+- **Tailwind CSS** for styling
+- **shadcn/ui** for UI components
+- **React Router** for routing
+- **TanStack Query** for data fetching and caching
+- **Axios** for HTTP requests
+- **Recharts** for data visualization
+- **date-fns** for date formatting
 
-## React Compiler
+## Getting Started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Prerequisites
 
-## Expanding the ESLint configuration
+- Node.js 18+ and npm
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Installation
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+```bash
+# Install dependencies
+npm install
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+# Start development server
+npm run dev
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The app will be available at `http://localhost:3000`
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Environment Variables
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Create a `.env` file in the frontend directory:
+
+```env
+VITE_API_BASE_URL=http://localhost:8080/api
+VITE_MOCK_USER_ID=1
 ```
+
+## Features
+
+### For All Employees
+
+- **Feed Page**: View company-wide thank you card feed
+- **Create Card**: Send thank you cards to colleagues
+- **My Cards**: View received and sent cards
+- **My Stats**: Personal statistics dashboard
+- **Top 10 Employees**: See most recognized employees
+
+### For HR Administrators
+
+- **Analytics Dashboard**: Overview of recognition activity
+- **Most Active Recognizers**: Employees who send the most cards
+- **Team Patterns**: Department-level recognition statistics
+- **Values Distribution**: Analysis of company values recognition
+- **CSV Export**: Export card data for analysis
+
+## Project Structure
+
+```
+frontend/
+├── src/
+│   ├── components/       # Reusable components
+│   │   ├── ui/          # shadcn/ui components
+│   │   ├── Card/        # Card-related components
+│   │   ├── Forms/       # Form components
+│   │   └── Filters/     # Filter components
+│   ├── pages/           # Page components
+│   │   ├── Feed/
+│   │   ├── CreateCard/
+│   │   ├── MyCards/
+│   │   ├── Stats/
+│   │   ├── TopEmployees/
+│   │   └── Analytics/
+│   ├── services/        # API service layer
+│   ├── types/           # TypeScript type definitions
+│   ├── utils/           # Utility functions
+│   ├── lib/             # Library configurations
+│   └── App.tsx          # Main app component
+├── public/
+└── package.json
+```
+
+## API Integration
+
+The frontend communicates with the backend API at the base URL specified in `VITE_API_BASE_URL`. All API calls are handled through service functions in `src/services/`.
+
+## Development
+
+### Adding New Components
+
+Use shadcn/ui CLI to add new components:
+
+```bash
+npx shadcn-ui@latest add [component-name]
+```
+
+### Code Style
+
+- Use TypeScript for type safety
+- Follow React best practices
+- Use Tailwind CSS for styling
+- Keep components small and focused
+
+## License
+
+Internal use only.
