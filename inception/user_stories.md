@@ -28,7 +28,7 @@ This document contains user stories for an internal employee recognition system 
 **So that** I can publicly recognize their contributions and efforts
 
 **Acceptance Criteria:**
-- User can access the card creation interface from Teams
+- User can access the card creation interface from Teams channel
 - User can initiate card creation with a clear call-to-action
 - Card creation form is intuitive and easy to use
 - User receives confirmation when card creation is initiated
