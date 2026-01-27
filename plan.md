@@ -101,58 +101,58 @@ Analyze user stories from `/inception/user_stories.md` and group them into loose
 ## Steps
 
 ### Phase 1: Analysis and Planning
-- [ ] **Step 1.1**: Analyze all user stories and identify natural boundaries based on:
+- [x] **Step 1.1**: Analyze all user stories and identify natural boundaries based on:
   - Functional domains (card creation, analytics, notifications, etc.)
   - Platform boundaries (Teams Channel vs Web App)
   - User roles (Employee vs HR Admin)
   - Data dependencies and coupling
 
-- [ ] **Step 1.2**: Propose unit groupings with rationale
+- [x] **Step 1.2**: Propose unit groupings with rationale
   - [Question] Should the Teams Channel integration be a separate unit from the Web App, or should they be combined based on functional domains?
-  - [Answer] 
+  - [Answer] No, the web app only uses HTTP API to interact with Teams channel. Teams channel is not a separate functional domain. 
   
   - [Question] Should HR Analytics be a completely separate unit/service, or part of the main Web App unit?
-  - [Answer] 
+  - [Answer] A separate unit 
   
   - [Question] For the MVP scope, should we include "Could Have" priority stories (US-1.4: Share cards, US-6.1: Milestones) in the units, or focus only on "Must Have" and "Should Have"?
-  - [Answer] 
+  - [Answer] Need to focus on all of them 
   
   - [Question] Should notification functionality (US-1.3) be part of the Teams Channel unit or a separate Notification Service unit?
-  - [Answer] 
+  - [Answer] Notification functionality does not need to be included in any of the above units, it belongs to Teams channel's existing functional unit which exlcluded in this project. 
 
 ### Phase 2: Unit Definition
-- [ ] **Step 2.1**: Create `/inception/units/` folder structure
+- [x] **Step 2.1**: Create `/inception/units/` folder structure
 
-- [ ] **Step 2.2**: For each identified unit, create individual `.md` files containing:
+- [x] **Step 2.2**: For each identified unit, create individual `.md` files containing:
   - Unit name and description
   - Relevant user stories with full acceptance criteria
   - Dependencies on other units
   - Key responsibilities
 
 ### Phase 3: Integration Contract
-- [ ] **Step 3.1**: Identify all inter-unit communication points
+- [x] **Step 3.1**: Identify all inter-unit communication points
 
-- [ ] **Step 3.2**: Define API endpoints for each unit:
+- [x] **Step 3.2**: Define API endpoints for each unit:
   - HTTP methods (GET, POST, PUT, DELETE)
   - Endpoint paths
   - Request/response schemas
   - Authentication requirements
 
-- [ ] **Step 3.3**: Create `/inception/units/integration_contract.md` with:
+- [x] **Step 3.3**: Create `/inception/units/integration_contract.md` with:
   - API specifications for each unit
   - Data models shared across units
   - Event/notification contracts (if applicable)
   - Synchronization requirements between Teams and Web App
 
 ### Phase 4: Review and Finalization
-- [ ] **Step 4.1**: Review all unit files for completeness and consistency
+- [x] **Step 4.1**: Review all unit files for completeness and consistency
 
-- [ ] **Step 4.2**: Validate that units are:
+- [x] **Step 4.2**: Validate that units are:
   - Loosely coupled (minimal dependencies)
   - Highly cohesive (related functionality grouped together)
   - Independently buildable and deployable
 
-- [ ] **Step 4.3**: Present final unit structure for approval
+- [x] **Step 4.3**: Present final unit structure for approval
 
 ## Initial Unit Proposal (Pending Clarification)
 
@@ -177,7 +177,7 @@ Based on initial analysis, here are potential unit groupings:
 4. **Analytics Service Unit** - All analytics, reporting, exports for both platforms
 
 [Question] Which unit grouping approach (A, B, C, or a different approach) would you prefer? Please consider your team structure, deployment preferences, and technical architecture.
-[Answer] 
+[Answer] C, but we won't have a separate Teams Channel unit 
 
 ---
 
@@ -185,3 +185,79 @@ Based on initial analysis, here are potential unit groupings:
 - All "Future Enhancement" stories (Epic 7) will be documented but marked as out of scope for current unit planning
 - Integration contracts will focus on REST APIs unless event-driven architecture is preferred
 - Emoji reaction synchronization between Teams and Web App will require careful contract definition
+
+
+---
+
+## Final Unit Structure Summary
+
+### ✅ Completed Units
+
+#### 1. Card Service Unit (`card_service_unit.md`)
+- **18 User Stories** covering card management, search, reactions, and statistics
+- **15 API Endpoints** for complete card operations
+- **Backend service** handling all card-related business logic
+- Dependencies: Employee Directory Service, Database
+
+#### 2. Web App Unit (`web_app_unit.md`)
+- **13 User Stories** covering UI for card creation, personal views, and interactions
+- **Frontend application** consuming Card Service and Analytics Service APIs
+- **No exposed APIs** (client-side only)
+- Dependencies: Card Service Unit, Analytics Service Unit
+
+#### 3. Analytics Service Unit (`analytics_service_unit.md`)
+- **5 User Stories** covering HR analytics, reporting, and data export
+- **7 API Endpoints** for analytics dashboard and reports
+- **Backend service** with read-only access to card data
+- Dependencies: Card Service Unit (read-only), Employee Directory Service
+
+### ✅ Integration Contract (`integration_contract.md`)
+- Complete API specifications for all 22 endpoints
+- Request/response schemas with validation rules
+- Authentication and authorization specifications
+- Error handling standards
+- Rate limiting policies
+- Data synchronization strategies
+- External system integration (Teams Channel, Employee Directory)
+
+### ✅ Documentation (`README.md`)
+- Unit overview and architecture diagram
+- User story distribution by unit and priority
+- Development approach and recommended build order
+- Testing strategy
+- Next steps for implementation
+
+---
+
+## Key Decisions Made
+
+Based on your answers:
+
+1. **No separate Teams Channel Unit**: Teams Channel uses HTTP API to interact with Card Service, not a separate functional domain
+2. **HR Analytics as separate unit**: Analytics Service Unit is independent from Web App
+3. **All priorities included**: Must Have, Should Have, and Could Have stories all included in units
+4. **Notifications excluded**: Handled by Teams Channel's existing functionality, not part of these units
+
+---
+
+## Unit Characteristics Validation
+
+### ✅ Loosely Coupled
+- Units communicate only via REST APIs
+- No direct database sharing
+- Clear API contracts defined
+- Independent deployment possible
+
+### ✅ Highly Cohesive
+- Card Service: All card operations together
+- Web App: All UI components together
+- Analytics Service: All analytics together
+
+### ✅ Independently Buildable
+- Each unit can be developed by separate team
+- Clear dependencies documented
+- API versioning supports parallel development
+
+---
+
+**Status**: ✅ Complete - All units defined, integration contracts created, ready for team assignment and development
