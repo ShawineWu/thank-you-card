@@ -3,7 +3,7 @@
   "CLIENT_ID": "cowboy-prod",
   "AUTH_SERVER": "https://hydra.castlery.com",
   "PLAT_UMS_SERVER": "https://plat-ums-api.cslr.io",
-  "LOGIN_CALLBACK_URL": "https://thank-you-card.castlery.com/callback",
-  "LOGOUT_CALLBACK_URL": "https://thank-you-card.castlery.com/",
+  "LOGIN_CALLBACK_URL": "https://cowboy.castlery.com/callback",
+  "LOGOUT_CALLBACK_URL": "https://cowboy.castlery.com",
   "API_BASE_URL": "https://api.castlery.com"
 }
