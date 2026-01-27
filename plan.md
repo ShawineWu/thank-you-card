@@ -261,3 +261,223 @@ Based on your answers:
 ---
 
 **Status**: ✅ Complete - All units defined, integration contracts created, ready for team assignment and development
+
+
+---
+
+# Plan: Domain Driven Design - Domain Model Design
+
+## Overview
+Design comprehensive Domain Driven Design (DDD) domain models for each software unit, including all tactical components: Aggregates, Entities, Value Objects, Domain Events, Policies, Repositories, and Domain Services.
+
+## Steps
+
+### Phase 1: Analysis and Domain Understanding
+- [ ] **Step 1.1**: Analyze Card Service Unit user stories and identify:
+  - Core domain concepts and business rules
+  - Bounded context boundaries
+  - Ubiquitous language terms
+  - Invariants and business constraints
+
+- [ ] **Step 1.2**: Analyze Analytics Service Unit user stories and identify:
+  - Core domain concepts and business rules
+  - Bounded context boundaries
+  - Ubiquitous language terms
+  - Invariants and business constraints
+
+- [ ] **Step 1.3**: Identify cross-cutting concerns and shared concepts between units
+
+### Phase 2: Domain Model Design Questions
+
+#### Card Service Unit Questions
+
+- [ ] **Step 2.1**: Card Aggregate Design
+  - [Question] Should Card be the aggregate root with Recipients and Reactions as entities within the aggregate, or should Recipients be value objects since they reference external Employee entities?
+  - [Answer] Card is the aggregate root, Sender and Recipient are value objects
+  
+  - [Question] Should emoji Reactions be part of the Card aggregate or a separate aggregate? Consider: reactions can be added/removed independently and may have high concurrency.
+  - [Answer] Not applicable, this is an external Teams system feature, not an object within our system
+  
+  - [Question] For card creation, should we use a Factory pattern or a domain service? The card creation involves validation of recipients, values, and business rules.
+  - [Answer] Factory pattern 
+
+- [ ] **Step 2.2**: Value Objects vs Entities
+  - [Question] Should RecognitionReason be a simple value object (string) or a rich value object with validation rules (character limits, content validation)?
+  - [Answer] Simple value object (string)
+  
+  - [Question] Should CompanyValue/Credo be an entity (with ID) or a value object? They are predefined and immutable, but need to be referenced by ID in the API.
+  - [Answer] Entity (with ID) 
+
+- [ ] **Step 2.3**: Domain Events
+  - [Question] Which domain events should be published? Suggestions: CardCreated, CardShared, ReactionAdded, ReactionRemoved, MilestoneAchieved. Should we include all of these or only critical ones?
+  - [Answer] Include all
+  
+  - [Question] Should domain events be published synchronously or asynchronously? This affects whether Teams Channel notifications happen in real-time.
+  - [Answer] Synchronous, published synchronously through Teams HTTP interface 
+
+- [ ] **Step 2.4**: Milestone Tracking
+  - [Question] Should Milestone be part of the Card aggregate, a separate aggregate, or managed by a domain service? Milestones track user activity across multiple cards.
+  - [Answer] Managed by domain service, milestones track the count of received cards per user dimension
+  
+  - [Question] Should milestone detection happen synchronously when a card is created (domain event handler) or asynchronously (batch process)?
+  - [Answer] Asynchronously 
+
+#### Analytics Service Unit Questions
+
+- [ ] **Step 2.5**: Analytics Bounded Context
+  - [Question] Should Analytics Service have its own domain model (separate bounded context) or share the Card domain model? Analytics reads card data but doesn't modify it.
+  - [Answer] Analytics Service has its own separate domain model
+  
+  - [Question] Should analytics aggregations (team stats, value distributions) be computed on-demand or pre-aggregated and stored? This affects whether we need aggregate entities for analytics.
+  - [Answer] On-demand computation 
+
+- [ ] **Step 2.6**: Read Model vs Domain Model
+  - [Question] Should Analytics Service use a CQRS pattern with a separate read model, or query the Card Service domain model directly?
+  - [Answer] Directly query the Card Service domain model 
+
+#### Shared Concepts
+
+- [ ] **Step 2.7**: Employee Reference
+  - [Question] How should we model Employee in the domain? As an entity, value object, or just an ID reference to external Employee Directory Service?
+  - [Answer] Only as an ID reference to external Employee Directory Service
+  
+  - [Question] Should we cache employee information (name, department) in the Card aggregate to avoid external service calls, or always fetch fresh data?
+  - [Answer] Always fetch fresh data 
+
+### Phase 3: Domain Model Design - Card Service Unit
+
+- [ ] **Step 3.1**: Create `/construction/` folder structure
+
+- [ ] **Step 3.2**: Design Card Service domain model components:
+  - Identify and document all Aggregates with their boundaries
+  - Identify and document all Entities within aggregates
+  - Identify and document all Value Objects
+  - Define all Domain Events
+  - Define Domain Services (if needed)
+  - Define Repositories
+  - Define Policies/Business Rules
+  - Document invariants and constraints
+
+- [ ] **Step 3.3**: Create `/construction/card_service/domain_model.md` with:
+  - Bounded context description
+  - Ubiquitous language glossary
+  - Aggregate designs with relationships
+  - Entity and Value Object specifications
+  - Domain Events catalog
+  - Domain Services descriptions
+  - Repository interfaces
+  - Business rules and invariants
+  - Domain model diagram (text-based)
+
+### Phase 4: Domain Model Design - Analytics Service Unit
+
+- [ ] **Step 4.1**: Design Analytics Service domain model components:
+  - Identify and document all Aggregates (if any)
+  - Identify and document all Entities
+  - Identify and document all Value Objects
+  - Define all Domain Events (if any)
+  - Define Domain Services
+  - Define Repositories
+  - Define calculation/aggregation logic
+
+- [ ] **Step 4.2**: Create `/construction/analytics_service/domain_model.md` with:
+  - Bounded context description
+  - Ubiquitous language glossary
+  - Aggregate designs (if applicable)
+  - Entity and Value Object specifications
+  - Domain Services descriptions
+  - Repository interfaces
+  - Analytics calculation specifications
+  - Domain model diagram (text-based)
+
+### Phase 5: Domain Model Design - Web App Unit
+
+- [ ] **Step 5.1**: Analyze Web App Unit requirements
+  - [Question] Should Web App Unit have its own domain model, or is it purely a presentation layer consuming backend APIs? In DDD, frontend typically doesn't have a domain model.
+  - [Answer] Purely a presentation layer consuming backend APIs 
+
+- [ ] **Step 5.2**: If Web App needs domain model, create `/construction/web_app/domain_model.md`
+  - Otherwise, document that Web App is a presentation layer without domain logic
+
+### Phase 6: Cross-Cutting Concerns
+
+- [ ] **Step 6.1**: Document shared kernel (if any):
+  - Shared value objects across bounded contexts
+  - Shared domain events
+  - Integration patterns between contexts
+
+- [ ] **Step 6.2**: Create `/construction/integration_patterns.md`:
+  - How bounded contexts communicate
+  - Anti-corruption layers (if needed)
+  - Event-driven integration patterns
+  - Shared data models vs separate models
+
+### Phase 7: Review and Validation
+
+- [ ] **Step 7.1**: Review all domain models for:
+  - Proper aggregate boundaries (consistency boundaries)
+  - Correct entity vs value object classifications
+  - Complete domain event coverage
+  - Repository interface completeness
+  - Business rule enforcement locations
+
+- [ ] **Step 7.2**: Validate domain models against user stories:
+  - All user stories can be implemented with the domain model
+  - All business rules are captured
+  - All invariants are enforced
+
+- [ ] **Step 7.3**: Present final domain models for approval
+
+---
+
+## Key DDD Principles to Follow
+
+### Aggregates
+- Each aggregate has one root entity
+- Aggregates are consistency boundaries
+- External references only by ID
+- Small aggregates preferred
+
+### Entities
+- Have unique identity
+- Mutable over time
+- Identity remains constant
+
+### Value Objects
+- Immutable
+- No identity (equality by value)
+- Can be shared
+- Prefer value objects over entities when possible
+
+### Domain Events
+- Past tense naming (CardCreated, not CreateCard)
+- Immutable
+- Contain all relevant data
+- Published after aggregate state change
+
+### Repositories
+- One repository per aggregate root
+- Collection-like interface
+- Hide persistence details
+
+### Domain Services
+- Stateless operations
+- Operations that don't belong to any entity
+- Coordinate multiple aggregates
+
+---
+
+## Notes
+- NO code snippets will be generated (as per requirements)
+- Focus on conceptual design and relationships
+- Use text-based diagrams (ASCII art or Mermaid syntax)
+- Document business rules and invariants clearly
+- Use ubiquitous language from the domain
+
+---
+
+## Deliverables
+1. `/construction/card_service/domain_model.md` - Complete DDD domain model
+2. `/construction/analytics_service/domain_model.md` - Complete DDD domain model
+3. `/construction/web_app/domain_model.md` - Domain model or documentation of presentation layer
+4. `/construction/integration_patterns.md` - Cross-context integration patterns

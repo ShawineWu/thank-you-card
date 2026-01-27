@@ -64,3 +64,5 @@ temp/
 dist/
 build/
 bin/
+
+/plan-zh.md
