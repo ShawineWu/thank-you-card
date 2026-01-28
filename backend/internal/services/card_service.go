@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"thank-you-card-backend/internal/models"
@@ -43,8 +44,10 @@ func NewCardService(cardRepo repositories.CardRepository, emojiRepo repositories
 }
 
 func (s *cardService) CreateCard(ctx context.Context, sender *models.Employee, recipients []uint, valueIDs []uint, reason string) (*models.Card, error) {
+	// Trim whitespace and validate length
+	reason = strings.TrimSpace(reason)
 	if len(reason) == 0 || len(reason) > 2000 {
-		return nil, fmt.Errorf("%w: reason must be 1-2000 chars", ErrValidation)
+		return nil, fmt.Errorf("%w: reason must be 1-2000 chars (current: %d)", ErrValidation, len(reason))
 	}
 	if len(recipients) == 0 {
 		return nil, fmt.Errorf("%w: at least one recipient required", ErrValidation)

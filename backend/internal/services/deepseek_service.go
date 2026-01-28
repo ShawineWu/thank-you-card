@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -27,6 +29,7 @@ func NewDeepSeekService() DeepSeekService {
 	apiKey := os.Getenv("DEEPSEEK_API_KEY")
 	if apiKey == "" {
 		// Return a no-op service if API key is not configured
+		log.Printf("WARNING: DEEPSEEK_API_KEY not configured, using no-op service")
 		return &noOpDeepSeekService{}
 	}
 
@@ -35,6 +38,7 @@ func NewDeepSeekService() DeepSeekService {
 		baseURL = "https://api.deepseek.com"
 	}
 
+	log.Printf("INFO: DeepSeek service initialized with base URL: %s (API key configured: %s...)", baseURL, apiKey[:min(10, len(apiKey))])
 	return &deepseekService{
 		apiKey:  apiKey,
 		baseURL: baseURL,
@@ -44,8 +48,18 @@ func NewDeepSeekService() DeepSeekService {
 	}
 }
 
+// Helper function for min
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 // GenerateRecognitionText generates a recognition text using DeepSeek API
 func (s *deepseekService) GenerateRecognitionText(ctx context.Context, recipientName string, userInput string, valueNames []string) (string, error) {
+	log.Printf("INFO: Generating recognition text for recipient: %s, input: %s, values: %v\n", recipientName, userInput, valueNames)
+
 	// Build the prompt
 	valuesText := ""
 	if len(valueNames) > 0 {
@@ -53,7 +67,6 @@ func (s *deepseekService) GenerateRecognitionText(ctx context.Context, recipient
 	}
 
 	prompt := fmt.Sprintf(`请根据以下信息，生成一段温暖、真诚、充满感激之情的感谢文本（彩虹屁风格），用于感谢同事。
-
 接收人：%s
 用户输入的关键信息：%s%s
 
@@ -61,8 +74,8 @@ func (s *deepseekService) GenerateRecognitionText(ctx context.Context, recipient
 1. 语言要温暖、真诚、充满感激之情
 2. 要体现对接收人的认可和赞美
 3. 如果提到了公司价值观，要自然地融入文本中
-4. 长度控制在200-500字之间
-5. 使用中文
+4. 长度控制在300-600字之间（不要超过600字）
+5. 使用中文或英文（根据用户输入的语言选择）
 6. 语气要自然、亲切，不要太正式
 
 请直接输出感谢文本，不要包含其他说明文字。`, recipientName, userInput, valuesText)
@@ -76,7 +89,7 @@ func (s *deepseekService) GenerateRecognitionText(ctx context.Context, recipient
 				"content": prompt,
 			},
 		},
-		"max_tokens":  1000,
+		"max_tokens":  800, // Limit to ensure we don't exceed 2000 chars (roughly 1 token = 2-3 chars for Chinese)
 		"temperature": 0.8,
 	}
 
@@ -87,6 +100,7 @@ func (s *deepseekService) GenerateRecognitionText(ctx context.Context, recipient
 
 	// Create HTTP request
 	url := fmt.Sprintf("%s/chat/completions", s.baseURL)
+	log.Printf("INFO: Calling DeepSeek API: %s\n", url)
 	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return "", fmt.Errorf("failed to create request: %w", err)
@@ -94,23 +108,31 @@ func (s *deepseekService) GenerateRecognitionText(ctx context.Context, recipient
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.apiKey))
+	log.Printf("INFO: Request headers set, sending to DeepSeek API...\n")
 
 	// Send request
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
+		log.Printf("ERROR: Failed to send request to DeepSeek API: %v\n", err)
 		return "", fmt.Errorf("failed to send request: %w", err)
 	}
 	defer resp.Body.Close()
 
+	log.Printf("INFO: DeepSeek API response status: %d\n", resp.StatusCode)
+
 	// Read response
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
+		log.Printf("ERROR: Failed to read response body: %v\n", err)
 		return "", fmt.Errorf("failed to read response: %w", err)
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		log.Printf("ERROR: DeepSeek API returned error status %d: %s\n", resp.StatusCode, string(bodyBytes))
 		return "", fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(bodyBytes))
 	}
+
+	log.Printf("INFO: DeepSeek API response received successfully, body length: %d\n", len(bodyBytes))
 
 	// Parse response
 	var response struct {
@@ -136,7 +158,14 @@ func (s *deepseekService) GenerateRecognitionText(ctx context.Context, recipient
 		return "", fmt.Errorf("no choices in response")
 	}
 
-	return response.Choices[0].Message.Content, nil
+	// Trim and limit the generated text to 2000 characters
+	generatedText := strings.TrimSpace(response.Choices[0].Message.Content)
+	if len(generatedText) > 2000 {
+		generatedText = generatedText[:2000]
+		log.Printf("WARNING: Generated text exceeded 2000 chars, truncated to 2000")
+	}
+
+	return generatedText, nil
 }
 
 // noOpDeepSeekService is a no-op implementation when API key is not configured

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -31,11 +32,16 @@ type GenerateTextResponse struct {
 
 // GenerateRecognitionText generates recognition text using AI
 func (h *AIHandler) GenerateRecognitionText(c *gin.Context) {
+	log.Printf("INFO: Received AI generation request\n")
+
 	var req GenerateTextRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("ERROR: Failed to bind request: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	log.Printf("INFO: Request data - recipient: %s, input: %s, values: %v\n", req.RecipientName, req.UserInput, req.ValueNames)
 
 	// Validate input
 	if req.RecipientName == "" {
@@ -49,6 +55,7 @@ func (h *AIHandler) GenerateRecognitionText(c *gin.Context) {
 	}
 
 	// Generate text
+	log.Printf("INFO: Calling DeepSeek service to generate text...\n")
 	text, err := h.deepseekService.GenerateRecognitionText(
 		c.Request.Context(),
 		req.RecipientName,
@@ -56,9 +63,11 @@ func (h *AIHandler) GenerateRecognitionText(c *gin.Context) {
 		req.ValueNames,
 	)
 	if err != nil {
+		log.Printf("ERROR: Failed to generate text: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to generate text: %v", err)})
 		return
 	}
 
+	log.Printf("INFO: Successfully generated text, length: %d\n", len(text))
 	c.JSON(http.StatusOK, GenerateTextResponse{Text: text})
 }

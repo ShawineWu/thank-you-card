@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -88,9 +89,12 @@ func (h *CompanyValueHandler) GetByType(c *gin.Context) {
 	ctx := c.Request.Context()
 	values, err := h.service.GetByType(ctx, valueType)
 	if err != nil {
+		fmt.Printf("ERROR: Failed to get company values by type %s: %v\n", valueType, err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	fmt.Printf("INFO: Found %d company values of type %s\n", len(values), valueType)
 
 	resp := make([]dto.CompanyValueResponse, len(values))
 	for i, v := range values {

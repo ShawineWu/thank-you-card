@@ -13,7 +13,15 @@ export interface GenerateTextResponse {
 export const aiApi = {
   // Generate recognition text using AI
   generateText: async (data: GenerateTextRequest): Promise<GenerateTextResponse> => {
-    const response = await api.post<GenerateTextResponse>('/ai/generate-text', data);
-    return response.data;
+    console.log('AI API: Sending request to /ai/generate-text', data);
+    try {
+      const response = await api.post<GenerateTextResponse>('/ai/generate-text', data);
+      console.log('AI API: Response received', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('AI API: Error occurred', error);
+      console.error('AI API: Error response', error.response?.data);
+      throw error;
+    }
   },
 };

@@ -42,14 +42,25 @@ const CreateCardPage = () => {
   })
 
   const generateTextMutation = useMutation({
-    mutationFn: (data: { recipientName: string; userInput: string; valueNames: string[] }) =>
-      aiApi.generateText(data),
+    mutationFn: (data: { recipientName: string; userInput: string; valueNames: string[] }) => {
+      console.log('Calling AI API with data:', data)
+      return aiApi.generateText(data)
+    },
     onSuccess: (response) => {
-      setReason(response.text)
-      setErrors((prev) => ({ ...prev, reason: '' }))
+      console.log('AI generation successful, received text:', response.text)
+      // Trim and limit text to MAX_REASON_LENGTH
+      let generatedText = response.text.trim()
+      if (generatedText.length > MAX_REASON_LENGTH) {
+        generatedText = generatedText.substring(0, MAX_REASON_LENGTH)
+        console.warn(`AI generated text exceeded ${MAX_REASON_LENGTH} chars, truncated to ${MAX_REASON_LENGTH}`)
+      }
+      setReason(generatedText)
+      setErrors((prev) => ({ ...prev, reason: '', generate: '' }))
     },
     onError: (error: any) => {
-      setErrors({ generate: error.response?.data?.error || 'Failed to generate text' })
+      console.error('AI generation error:', error)
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to generate text'
+      setErrors({ generate: errorMessage })
     },
   })
 
