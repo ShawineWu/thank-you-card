@@ -11,8 +11,7 @@ const Layout = () => {
   const navItems = [
     { path: '/', label: 'Feed', icon: Home },
     { path: '/create', label: 'Create Card', icon: Plus },
-    { path: '/my-cards', label: 'My Cards', icon: Inbox },
-    { path: '/stats', label: 'My Stats', icon: BarChart3 },
+    { path: '/stats', label: 'Stats', icon: BarChart3 },
     { path: '/top-employees', label: 'Top 10', icon: TrendingUp },
     { path: '/company-values', label: 'Values', icon: BookOpen },
   ]

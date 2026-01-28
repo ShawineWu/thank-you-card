@@ -11,6 +11,8 @@ import (
 
 type EmployeeRepository interface {
 	GetByID(ctx context.Context, id uint) (*models.Employee, error)
+	GetAll(ctx context.Context) ([]models.Employee, error)
+	Search(ctx context.Context, query string) ([]models.Employee, error)
 }
 
 type CardFilters struct {
@@ -177,13 +179,13 @@ func (r *cardRepository) queryCards(ctx context.Context, filters CardFilters, ba
 	}
 
 	if filters.From != nil {
-		db = db.Where("created_at >= ?", *filters.From)
+		db = db.Where("cards.created_at >= ?", *filters.From)
 	}
 	if filters.To != nil {
-		db = db.Where("created_at <= ?", *filters.To)
+		db = db.Where("cards.created_at <= ?", *filters.To)
 	}
 	if filters.Query != "" {
-		db = db.Where("reason ILIKE ?", "%"+filters.Query+"%")
+		db = db.Where("cards.reason ILIKE ?", "%"+filters.Query+"%")
 	}
 
 	var total int64
@@ -201,7 +203,7 @@ func (r *cardRepository) queryCards(ctx context.Context, filters CardFilters, ba
 	}
 
 	var cards []models.Card
-	if err := db.Order("created_at DESC").
+	if err := db.Order("cards.created_at DESC").
 		Limit(pageSize).
 		Offset((page - 1) * pageSize).
 		Find(&cards).Error; err != nil {
@@ -227,6 +229,29 @@ func (r *employeeRepository) GetByID(ctx context.Context, id uint) (*models.Empl
 		return nil, err
 	}
 	return &e, nil
+}
+
+func (r *employeeRepository) GetAll(ctx context.Context) ([]models.Employee, error) {
+	var employees []models.Employee
+	if err := r.db.WithContext(ctx).
+		Order("name ASC").
+		Find(&employees).Error; err != nil {
+		return nil, err
+	}
+	return employees, nil
+}
+
+func (r *employeeRepository) Search(ctx context.Context, query string) ([]models.Employee, error) {
+	var employees []models.Employee
+	db := r.db.WithContext(ctx)
+	if query != "" {
+		searchPattern := "%" + query + "%"
+		db = db.Where("name ILIKE ? OR department ILIKE ? OR email ILIKE ?", searchPattern, searchPattern, searchPattern)
+	}
+	if err := db.Order("name ASC").Find(&employees).Error; err != nil {
+		return nil, err
+	}
+	return employees, nil
 }
 
 type emojiReactionRepository struct {

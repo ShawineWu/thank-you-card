@@ -7,12 +7,23 @@ import { Loader2, Trophy, Calendar } from 'lucide-react'
 import { format, subDays } from 'date-fns'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import EmployeeCardsDialog from '@/components/TopEmployees/EmployeeCardsDialog'
+import ValueDetailDialog from '@/components/CompanyValues/ValueDetailDialog'
+import { CompanyValueSummary, CompanyValueDetail } from '@/types/card'
+import { companyValuesApi } from '@/services/companyValues'
 
 const TopEmployeesPage = () => {
   const [from, setFrom] = useState<string>(
     format(subDays(new Date(), 30), 'yyyy-MM-dd')
   )
   const [to, setTo] = useState<string>(format(new Date(), 'yyyy-MM-dd'))
+  const [selectedEmployee, setSelectedEmployee] = useState<{
+    id: number
+    name: string
+  } | null>(null)
+  const [cardsDialogOpen, setCardsDialogOpen] = useState(false)
+  const [selectedValue, setSelectedValue] = useState<CompanyValueDetail | null>(null)
+  const [valueDialogOpen, setValueDialogOpen] = useState(false)
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['top-recipients', from, to],
@@ -25,6 +36,21 @@ const TopEmployeesPage = () => {
         10
       ),
   })
+
+  const handleCardsClick = (employeeId: number, employeeName: string) => {
+    setSelectedEmployee({ id: employeeId, name: employeeName })
+    setCardsDialogOpen(true)
+  }
+
+  const handleValueClick = async (value: CompanyValueSummary) => {
+    try {
+      const valueDetail = await companyValuesApi.getById(value.id)
+      setSelectedValue(valueDetail)
+      setValueDialogOpen(true)
+    } catch (error) {
+      console.error('Failed to load value details:', error)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -105,18 +131,32 @@ const TopEmployeesPage = () => {
             <div className="space-y-4">
               {data.map((employee, index) => {
                 const rank = index + 1
-                const isTopThree = rank <= 3
+                // Different colors for top 3: gold, silver, bronze
+                let rankColorClass = 'bg-muted text-muted-foreground'
+                let rankBorderClass = ''
+                if (rank === 1) {
+                  // Gold - 金色渐变
+                  rankColorClass = 'bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 text-white shadow-lg shadow-yellow-500/50'
+                  rankBorderClass = 'ring-2 ring-yellow-300'
+                } else if (rank === 2) {
+                  // Silver - 银色渐变
+                  rankColorClass = 'bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500 text-white shadow-lg shadow-gray-400/50'
+                  rankBorderClass = 'ring-2 ring-gray-200'
+                } else if (rank === 3) {
+                  // Bronze - 铜色渐变
+                  rankColorClass = 'bg-gradient-to-br from-orange-600 via-amber-700 to-orange-800 text-white shadow-lg shadow-orange-600/50'
+                  rankBorderClass = 'ring-2 ring-orange-300'
+                }
+                
                 return (
                   <div
                     key={employee.employeeId}
-                    className="flex items-center space-x-4 p-4 rounded-lg border hover:bg-accent/50 transition-colors"
+                    className={`flex items-center space-x-4 p-4 rounded-lg border hover:bg-accent/50 transition-colors ${
+                      rank <= 3 ? 'bg-gradient-to-r from-background to-accent/20' : ''
+                    }`}
                   >
                     <div
-                      className={`flex items-center justify-center w-10 h-10 rounded-full font-bold ${
-                        isTopThree
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-muted-foreground'
-                      }`}
+                      className={`flex items-center justify-center w-12 h-12 rounded-full font-bold text-lg ${rankColorClass} ${rankBorderClass}`}
                     >
                       {rank}
                     </div>
@@ -126,7 +166,11 @@ const TopEmployeesPage = () => {
                         {employee.department}
                       </div>
                     </div>
-                    <Badge variant="secondary" className="text-base px-3 py-1">
+                    <Badge 
+                      variant="secondary" 
+                      className="text-base px-3 py-1 cursor-pointer hover:bg-secondary/80 transition-colors"
+                      onClick={() => handleCardsClick(employee.employeeId, employee.name)}
+                    >
                       {employee.count} {employee.count === 1 ? 'card' : 'cards'}
                     </Badge>
                   </div>
@@ -140,6 +184,26 @@ const TopEmployeesPage = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Employee Cards Dialog */}
+      {selectedEmployee && (
+        <EmployeeCardsDialog
+          employeeId={selectedEmployee.id}
+          employeeName={selectedEmployee.name}
+          open={cardsDialogOpen}
+          onOpenChange={setCardsDialogOpen}
+          from={from}
+          to={to}
+          onValueClick={handleValueClick}
+        />
+      )}
+
+      {/* Value Detail Dialog */}
+      <ValueDetailDialog
+        value={selectedValue}
+        open={valueDialogOpen}
+        onOpenChange={setValueDialogOpen}
+      />
     </div>
   )
 }

@@ -217,12 +217,48 @@ func parseCardFilters(c *gin.Context) repositories.CardFilters {
 		}
 	}
 
+	// Parse values[] query parameter
+	var valueIDs []uint
+	if values := c.QueryArray("values[]"); len(values) > 0 {
+		valueIDs = make([]uint, 0, len(values))
+		for _, v := range values {
+			if id, err := strconv.ParseUint(v, 10, 64); err == nil {
+				valueIDs = append(valueIDs, uint(id))
+			}
+		}
+	}
+
+	// Parse senderIds[] query parameter
+	var senderIDs []uint
+	if senders := c.QueryArray("senderIds[]"); len(senders) > 0 {
+		senderIDs = make([]uint, 0, len(senders))
+		for _, v := range senders {
+			if id, err := strconv.ParseUint(v, 10, 64); err == nil {
+				senderIDs = append(senderIDs, uint(id))
+			}
+		}
+	}
+
+	// Parse recipientIds[] query parameter
+	var recipientIDs []uint
+	if recipients := c.QueryArray("recipientIds[]"); len(recipients) > 0 {
+		recipientIDs = make([]uint, 0, len(recipients))
+		for _, v := range recipients {
+			if id, err := strconv.ParseUint(v, 10, 64); err == nil {
+				recipientIDs = append(recipientIDs, uint(id))
+			}
+		}
+	}
+
 	return repositories.CardFilters{
-		Page:     page,
-		PageSize: size,
-		From:     fromPtr,
-		To:       toPtr,
-		Query:    c.Query("q"),
+		Page:         page,
+		PageSize:     size,
+		From:         fromPtr,
+		To:           toPtr,
+		Query:        c.Query("q"),
+		ValueIDs:     valueIDs,
+		SenderIDs:    senderIDs,
+		RecipientIDs: recipientIDs,
 	}
 }
 

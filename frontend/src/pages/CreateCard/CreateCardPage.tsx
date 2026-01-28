@@ -188,9 +188,11 @@ const CreateCardPage = () => {
                   const selectedValues = allValues.filter(v => valueIds.includes(v.id))
                   const valueNames = selectedValues.map(v => v.name)
 
-                  // Generate text
+                  // Generate text with sender and recipient info
                   generateTextMutation.mutate({
                     recipientName: recipients.map(r => r.name).join(' and '),
+                    senderName: user?.employee?.name || user?.username || '',
+                    senderDepartment: user?.employee?.department || '',
                     userInput: userInput.trim(),
                     valueNames,
                   })

@@ -8,9 +8,10 @@ interface CardItemProps {
   card: CardResponse
   onReactionChange?: () => void
   readOnly?: boolean // If true, reactions are display-only (e.g., in Analytics pages)
+  onValueClick?: (value: import('@/types/card').CompanyValueSummary) => void
 }
 
-const CardItem = ({ card, onReactionChange, readOnly = false }: CardItemProps) => {
+const CardItem = ({ card, onReactionChange, readOnly = false, onValueClick }: CardItemProps) => {
   return (
     <Card className="mb-4">
       <CardHeader>
@@ -39,7 +40,7 @@ const CardItem = ({ card, onReactionChange, readOnly = false }: CardItemProps) =
         
         <div className="flex flex-wrap gap-2 mb-4">
           {card.values.map((value) => (
-            <ValueBadge key={value.id} value={value} />
+            <ValueBadge key={value.id} value={value} onClick={onValueClick} />
           ))}
         </div>
 

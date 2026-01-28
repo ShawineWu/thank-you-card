@@ -8,6 +8,10 @@ import { format, subDays } from 'date-fns'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
+import ValueCardsDialog from '@/components/Analytics/ValueCardsDialog'
+import ValueDetailDialog from '@/components/CompanyValues/ValueDetailDialog'
+import { CompanyValueSummary, CompanyValueDetail } from '@/types/card'
+import { companyValuesApi } from '@/services/companyValues'
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#8dd1e1', '#d084d0']
 
@@ -16,6 +20,13 @@ const ValuesDistributionPage = () => {
     format(subDays(new Date(), 30), 'yyyy-MM-dd')
   )
   const [to, setTo] = useState<string>(format(new Date(), 'yyyy-MM-dd'))
+  const [selectedValue, setSelectedValue] = useState<{
+    id: number
+    name: string
+  } | null>(null)
+  const [cardsDialogOpen, setCardsDialogOpen] = useState(false)
+  const [selectedValueDetail, setSelectedValueDetail] = useState<CompanyValueDetail | null>(null)
+  const [valueDetailDialogOpen, setValueDetailDialogOpen] = useState(false)
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['analytics', 'values', from, to],
@@ -47,6 +58,21 @@ const ValuesDistributionPage = () => {
     value: item.count,
     percentage: item.percentage,
   })) || []
+
+  const handleCardsClick = (valueId: number, valueName: string) => {
+    setSelectedValue({ id: valueId, name: valueName })
+    setCardsDialogOpen(true)
+  }
+
+  const handleValueClick = async (value: CompanyValueSummary) => {
+    try {
+      const valueDetail = await companyValuesApi.getById(value.id)
+      setSelectedValueDetail(valueDetail)
+      setValueDetailDialogOpen(true)
+    } catch (error) {
+      console.error('Failed to load value details:', error)
+    }
+  }
 
   return (
     <div>
@@ -144,12 +170,17 @@ const ValuesDistributionPage = () => {
                     </Badge>
                     <div>
                       <div className="font-medium">{item.name}</div>
-                      <div className="text-sm text-muted-foreground">{item.code}</div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-semibold">{item.count} cards</div>
-                    <div className="text-sm text-muted-foreground">
+                    <Badge 
+                      variant="secondary" 
+                      className="text-base px-3 py-1 cursor-pointer hover:bg-secondary/80 transition-colors"
+                      onClick={() => handleCardsClick(item.valueId, item.name)}
+                    >
+                      {item.count} {item.count === 1 ? 'card' : 'cards'}
+                    </Badge>
+                    <div className="text-sm text-muted-foreground mt-1">
                       {item.percentage.toFixed(1)}%
                     </div>
                   </div>
@@ -163,6 +194,26 @@ const ValuesDistributionPage = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Value Cards Dialog */}
+      {selectedValue && (
+        <ValueCardsDialog
+          valueId={selectedValue.id}
+          valueName={selectedValue.name}
+          open={cardsDialogOpen}
+          onOpenChange={setCardsDialogOpen}
+          from={from}
+          to={to}
+          onValueClick={handleValueClick}
+        />
+      )}
+
+      {/* Value Detail Dialog */}
+      <ValueDetailDialog
+        value={selectedValueDetail}
+        open={valueDetailDialogOpen}
+        onOpenChange={setValueDetailDialogOpen}
+      />
     </div>
   )
 }

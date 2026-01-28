@@ -5,7 +5,6 @@ import ProtectedRoute from './components/ProtectedRoute'
 import LoginPage from './pages/Login/LoginPage'
 import FeedPage from './pages/Feed/FeedPage'
 import CreateCardPage from './pages/CreateCard/CreateCardPage'
-import MyCardsPage from './pages/MyCards/MyCardsPage'
 import StatsPage from './pages/Stats/StatsPage'
 import TopEmployeesPage from './pages/TopEmployees/TopEmployeesPage'
 import AnalyticsLayout from './pages/Analytics/AnalyticsLayout'
@@ -24,7 +23,7 @@ function App() {
           <Route path="/" element={<Layout />}>
             <Route index element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
             <Route path="create" element={<ProtectedRoute><CreateCardPage /></ProtectedRoute>} />
-            <Route path="my-cards" element={<ProtectedRoute><MyCardsPage /></ProtectedRoute>} />
+            <Route path="my-cards" element={<Navigate to="/stats" replace />} />
             <Route path="stats" element={<ProtectedRoute><StatsPage /></ProtectedRoute>} />
             <Route path="top-employees" element={<ProtectedRoute><TopEmployeesPage /></ProtectedRoute>} />
             <Route path="company-values" element={<ProtectedRoute><CompanyValuesPage /></ProtectedRoute>} />

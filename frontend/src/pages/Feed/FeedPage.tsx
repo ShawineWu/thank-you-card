@@ -22,10 +22,6 @@ const FeedPage = () => {
     setFilters({ ...newFilters, page: 1 })
   }
 
-  const handleLoadMore = () => {
-    setFilters(prev => ({ ...prev, page: (prev.page || 1) + 1 }))
-  }
-
   if (isLoading && !data) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -45,7 +41,16 @@ const FeedPage = () => {
     )
   }
 
-  const hasMore = data ? (data.items.length < data.total) : false
+  const totalPages = data ? Math.ceil(data.total / (filters.pageSize || 20)) : 0
+  const currentPage = filters.page || 1
+  const hasMore = data ? currentPage < totalPages : false
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setFilters(prev => ({ ...prev, page: newPage }))
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
 
   return (
     <div>
@@ -57,6 +62,11 @@ const FeedPage = () => {
       <FeedFilters filters={filters} onFiltersChange={handleFiltersChange} />
 
       <div className="mt-6">
+        {data && data.total > 0 && (
+          <div className="mb-4 text-sm text-muted-foreground">
+            Showing {((currentPage - 1) * (filters.pageSize || 20)) + 1} to {Math.min(currentPage * (filters.pageSize || 20), data.total)} of {data.total} cards
+          </div>
+        )}
         <CardList 
           cards={data?.items || []} 
           onReactionChange={() => refetch()}
@@ -64,21 +74,54 @@ const FeedPage = () => {
         />
       </div>
 
-      {hasMore && (
-        <div className="text-center mt-6">
-          <Button 
-            onClick={handleLoadMore} 
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-6">
+          <Button
             variant="outline"
-            disabled={isLoading}
+            size="sm"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1 || isLoading}
           >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Loading...
-              </>
-            ) : (
-              'Load More'
-            )}
+            Previous
+          </Button>
+          
+          {/* Page numbers */}
+          <div className="flex items-center gap-1">
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNum: number
+              if (totalPages <= 5) {
+                pageNum = i + 1
+              } else if (currentPage <= 3) {
+                pageNum = i + 1
+              } else if (currentPage >= totalPages - 2) {
+                pageNum = totalPages - 4 + i
+              } else {
+                pageNum = currentPage - 2 + i
+              }
+              
+              return (
+                <Button
+                  key={pageNum}
+                  variant={currentPage === pageNum ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handlePageChange(pageNum)}
+                  disabled={isLoading}
+                  className="min-w-[40px]"
+                >
+                  {pageNum}
+                </Button>
+              )
+            })}
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages || isLoading}
+          >
+            Next
           </Button>
         </div>
       )}

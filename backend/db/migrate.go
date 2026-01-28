@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -46,31 +47,92 @@ func seedCompanyValues(gormDB *gorm.DB) error {
 	defer cancel()
 
 	type seedValue struct {
-		Code string
-		Name string
-		Type string
-		Desc string
+		Code     string
+		Name     string
+		Type     string
+		Desc     string
+		Examples []string
 	}
 
 	var seeds = []seedValue{
 		// Values
-		{"MAKE_IMPACT", "Make an Impact", "VALUE", "Be driven by the desire to build something that can touch millions of lives."},
-		{"STRIVE_EXCELLENCE", "Strive for Excellence", "VALUE", "Today's great is not good enough for tomorrow."},
-		{"STAND_TOGETHER", "Stand Together", "VALUE", "Embrace the spirit of solidarity & commitment through thick and thin."},
-		{"BE_OPEN_MINDED", "Be Open-Minded", "VALUE", "Diversity is strength. Magic often happens at the intersection of two different worlds."},
-		{"STAY_GROUNDED", "Stay Grounded", "VALUE", "Always remember our roots and higher purpose. Plus, life is too short to be around jerks."},
+		{"MAKE_IMPACT", "Make an Impact", "VALUE", "Be driven by the desire to build something that can touch millions of lives.", []string{
+			"Led a project that improved customer satisfaction by 30%",
+			"Volunteered to mentor new team members and helped 5 people onboard successfully",
+			"Identified and fixed a critical bug that affected thousands of users",
+		}},
+		{"STRIVE_EXCELLENCE", "Strive for Excellence", "VALUE", "Today's great is not good enough for tomorrow.", []string{
+			"Continuously improved code quality, reducing technical debt by 40%",
+			"Set up automated testing that caught 90% of bugs before production",
+			"Redesigned a feature based on user feedback, increasing engagement by 25%",
+		}},
+		{"STAND_TOGETHER", "Stand Together", "VALUE", "Embrace the spirit of solidarity & commitment through thick and thin.", []string{
+			"Helped a teammate meet a tight deadline by working late together",
+			"Organized team building activities that improved team cohesion",
+			"Supported the team during a difficult project launch, staying positive and encouraging",
+		}},
+		{"BE_OPEN_MINDED", "Be Open-Minded", "VALUE", "Diversity is strength. Magic often happens at the intersection of two different worlds.", []string{
+			"Actively listened to different perspectives in team discussions",
+			"Collaborated with cross-functional teams to create innovative solutions",
+			"Welcomed feedback and incorporated suggestions from diverse team members",
+		}},
+		{"STAY_GROUNDED", "Stay Grounded", "VALUE", "Always remember our roots and higher purpose. Plus, life is too short to be around jerks.", []string{
+			"Maintained humility after a major project success",
+			"Helped create a positive and inclusive team environment",
+			"Remembered to celebrate small wins and appreciate team efforts",
+		}},
 
 		// Credos
-		{"BIAS_FOR_ACTION", "Bias for Action", "CREDO", "Speed matters, take action to deliver a high quality result with calculated risk taking. Be time conscious and set deadlines on initiatives. Promptly ask for help when faced with roadblocks, be the roadblock-remover where we can. It is better to be moving than not, most consequences are manageable."},
-		{"CUSTOMER_CENTRIC", "Customer Centric", "CREDO", "We start with the customer experience, centring our processes and decisions around it. Never stick to what has been done for the sake of tradition. Advocate for our customers, add value wherever possible and build trust with sincere interactions."},
-		{"THINK_STRATEGICALLY", "Think Strategically", "CREDO", "We know our business inside out, acutely aware of the market dynamics and crystal clear of our positioning and what we offer. We stay ahead of the curve by being flexible enough to pivot quickly, being nimble in problem solving and being obsessed with value creation for our customers, employees and partners. We connect the dots where others don't."},
-		{"DEEP_DIVE", "Deep Dive", "CREDO", "No detail is too small, no task too unimportant. Always ask why, validate with data, slicing for insights and looking for opportunities. Only when we know the nuts and bolts of everything we work on, can we troubleshoot effectively and innovate creatively. Identify root causes. When in doubt, keep questioning constructively."},
-		{"INVENT_SIMPLIFY", "Invent and Simplify", "CREDO", "There is no need to over-complicate. Get creative with solutions, streamline where we can and tap on the expertise of different teams. Innovation and invention are expected and achieved by leveraging all available resources."},
-		{"EARN_TRUST", "Earn Trust", "CREDO", "Always deliver on promises. We listen attentively, speak candidly and maintain the highest standards of ethics - towards our customers and our team."},
-		{"TAKE_OWNERSHIP", "Take Ownership", "CREDO", "Each of us represents the company, beyond just ourselves or our team. When times are good, we celebrate together. When times are bad, we stay and face the adversity as one. Act with a view of the long term, today's great piece of work will have a lasting impact on the bigger picture. The work we produce speaks for the company, be proud of it, own it."},
-		{"CHALLENGE_DISAGREE_COMMIT", "Challenge Disagree and Commit", "CREDO", "When in doubt, challenge respectfully and objectively, even if it is uncomfortable. Unemotionally review the objective of the things we are doing and whether how we are doing it is the best way to do it. Present facts instead of succumbing to feelings. Ideas evolve and improve when scrutinised. Once a decision is determined, commit wholeheartedly and own the consequences together."},
-		{"LEARN_BE_CURIOUS", "Learn and Be Curious", "CREDO", "Learn from team mates, customers and competitors. Always be curious about the whys and how things are done, be eager to go deeper and bring our learnings back to our work."},
-		{"DO_MORE_WITH_LESS", "Do More with Less", "CREDO", "Know where we should be investing, and invest it better. Everyone is empowered to implement efficient processes and reduce spending. Do so wisely because we cut costs but we don't cut corners."},
+		{"BIAS_FOR_ACTION", "Bias for Action", "CREDO", "Speed matters, take action to deliver a high quality result with calculated risk taking. Be time conscious and set deadlines on initiatives. Promptly ask for help when faced with roadblocks, be the roadblock-remover where we can. It is better to be moving than not, most consequences are manageable.", []string{
+			"Quickly prototyped a solution to test a hypothesis within 2 days",
+			"Identified a blocker and immediately reached out to the right people to resolve it",
+			"Made a decision and moved forward when others were stuck in analysis paralysis",
+		}},
+		{"CUSTOMER_CENTRIC", "Customer Centric", "CREDO", "We start with the customer experience, centring our processes and decisions around it. Never stick to what has been done for the sake of tradition. Advocate for our customers, add value wherever possible and build trust with sincere interactions.", []string{
+			"Conducted user interviews to understand pain points before building a feature",
+			"Advocated for a customer-requested feature that wasn't initially prioritized",
+			"Fixed a customer-reported issue within 24 hours of receiving the feedback",
+		}},
+		{"THINK_STRATEGICALLY", "Think Strategically", "CREDO", "We know our business inside out, acutely aware of the market dynamics and crystal clear of our positioning and what we offer. We stay ahead of the curve by being flexible enough to pivot quickly, being nimble in problem solving and being obsessed with value creation for our customers, employees and partners. We connect the dots where others don't.", []string{
+			"Identified a market opportunity and proposed a strategic initiative",
+			"Connected insights from different departments to create a comprehensive solution",
+			"Pivoted project direction based on market research and competitive analysis",
+		}},
+		{"DEEP_DIVE", "Deep Dive", "CREDO", "No detail is too small, no task too unimportant. Always ask why, validate with data, slicing for insights and looking for opportunities. Only when we know the nuts and bolts of everything we work on, can we troubleshoot effectively and innovate creatively. Identify root causes. When in doubt, keep questioning constructively.", []string{
+			"Investigated a performance issue and found the root cause after thorough analysis",
+			"Asked probing questions during code review that led to a better solution",
+			"Validated assumptions with data before making important decisions",
+		}},
+		{"INVENT_SIMPLIFY", "Invent and Simplify", "CREDO", "There is no need to over-complicate. Get creative with solutions, streamline where we can and tap on the expertise of different teams. Innovation and invention are expected and achieved by leveraging all available resources.", []string{
+			"Simplified a complex process that saved the team 5 hours per week",
+			"Created a reusable component that eliminated code duplication across 3 projects",
+			"Found a creative solution that reduced implementation time by 50%",
+		}},
+		{"EARN_TRUST", "Earn Trust", "CREDO", "Always deliver on promises. We listen attentively, speak candidly and maintain the highest standards of ethics - towards our customers and our team.", []string{
+			"Delivered a project on time despite unexpected challenges",
+			"Admitted a mistake early and worked proactively to fix it",
+			"Provided honest feedback in a constructive and respectful manner",
+		}},
+		{"TAKE_OWNERSHIP", "Take Ownership", "CREDO", "Each of us represents the company, beyond just ourselves or our team. When times are good, we celebrate together. When times are bad, we stay and face the adversity as one. Act with a view of the long term, today's great piece of work will have a lasting impact on the bigger picture. The work we produce speaks for the company, be proud of it, own it.", []string{
+			"Took responsibility for a project outcome, both successes and failures",
+			"Went beyond assigned tasks to ensure overall project success",
+			"Fixed an issue that wasn't technically my responsibility but affected the team",
+		}},
+		{"CHALLENGE_DISAGREE_COMMIT", "Challenge Disagree and Commit", "CREDO", "When in doubt, challenge respectfully and objectively, even if it is uncomfortable. Unemotionally review the objective of the things we are doing and whether how we are doing it is the best way to do it. Present facts instead of succumbing to feelings. Ideas evolve and improve when scrutinised. Once a decision is determined, commit wholeheartedly and own the consequences together.", []string{
+			"Respectfully challenged a technical approach with data and alternative solutions",
+			"Disagreed with a decision but fully committed once the team made a choice",
+			"Facilitated a healthy debate that led to a better final decision",
+		}},
+		{"LEARN_BE_CURIOUS", "Learn and Be Curious", "CREDO", "Learn from team mates, customers and competitors. Always be curious about the whys and how things are done, be eager to go deeper and bring our learnings back to our work.", []string{
+			"Learned a new technology and applied it to improve our codebase",
+			"Asked questions to understand the 'why' behind existing processes",
+			"Shared learnings from a conference with the team and implemented best practices",
+		}},
+		{"DO_MORE_WITH_LESS", "Do More with Less", "CREDO", "Know where we should be investing, and invest it better. Everyone is empowered to implement efficient processes and reduce spending. Do so wisely because we cut costs but we don't cut corners.", []string{
+			"Optimized a process that reduced costs by 30% without sacrificing quality",
+			"Found a free tool that replaced a paid service, saving the company money",
+			"Streamlined workflows to achieve the same results with fewer resources",
+		}},
 	}
 
 	for _, sv := range seeds {
@@ -83,11 +145,15 @@ func seedCompanyValues(gormDB *gorm.DB) error {
 			}
 		}
 
+		// Serialize examples to JSON
+		examplesJSON, _ := json.Marshal(sv.Examples)
+
 		if existing.ID != 0 {
-			// Ensure name/description/type are up to date.
+			// Ensure name/description/type/examples are up to date.
 			existing.Name = sv.Name
 			existing.Type = sv.Type
 			existing.Description = sv.Desc
+			existing.Examples = string(examplesJSON)
 			if err := gormDB.WithContext(ctx).Save(&existing).Error; err != nil {
 				return err
 			}
@@ -99,6 +165,7 @@ func seedCompanyValues(gormDB *gorm.DB) error {
 			Name:        sv.Name,
 			Type:        sv.Type,
 			Description: sv.Desc,
+			Examples:    string(examplesJSON),
 		}
 		if err := gormDB.WithContext(ctx).Create(&cv).Error; err != nil {
 			return err

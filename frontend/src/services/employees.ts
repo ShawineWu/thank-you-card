@@ -1,41 +1,35 @@
+import api from './api';
 import { EmployeeSummary } from '@/types/card';
 
-// Mock employee data - in production, this would come from an API
-// For MVP, we'll use mock data for recipient selection
-export const MOCK_EMPLOYEES: EmployeeSummary[] = [
-  { id: 1, name: 'Mock Employee', department: 'Engineering' },
-  { id: 2, name: 'Mock HR Admin', department: 'HR' },
-  { id: 3, name: 'Alice Johnson', department: 'Engineering' },
-  { id: 4, name: 'Bob Smith', department: 'Product' },
-  { id: 5, name: 'Carol White', department: 'Design' },
-  { id: 6, name: 'David Brown', department: 'Marketing' },
-  { id: 7, name: 'Eva Green', department: 'Sales' },
-  { id: 8, name: 'Frank Miller', department: 'Engineering' },
-  { id: 9, name: 'Grace Lee', department: 'Product' },
-  { id: 10, name: 'Henry Wilson', department: 'Operations' },
-];
+export interface EmployeeListResponse {
+  items: EmployeeSummary[];
+  total: number;
+}
 
 export const employeesApi = {
-  // Search employees (mock implementation)
-  searchEmployees: async (query?: string): Promise<EmployeeSummary[]> => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 200));
-    
-    if (!query) {
-      return MOCK_EMPLOYEES;
-    }
-    
-    const lowerQuery = query.toLowerCase();
-    return MOCK_EMPLOYEES.filter(
-      emp => 
-        emp.name.toLowerCase().includes(lowerQuery) ||
-        emp.department.toLowerCase().includes(lowerQuery)
-    );
+  // Get all employees
+  getAll: async (): Promise<EmployeeListResponse> => {
+    const response = await api.get<EmployeeListResponse>('/employees');
+    return response.data;
   },
 
-  // Get employee by ID
+  // Search employees by name, department, or email
+  searchEmployees: async (query?: string): Promise<EmployeeSummary[]> => {
+    const params = new URLSearchParams();
+    if (query) {
+      params.append('q', query);
+    }
+    const response = await api.get<EmployeeListResponse>(`/employees/search?${params.toString()}`);
+    return response.data.items;
+  },
+
+  // Get employee by ID (fallback to search if needed)
   getEmployeeById: async (id: number): Promise<EmployeeSummary | null> => {
-    await new Promise(resolve => setTimeout(resolve, 100));
-    return MOCK_EMPLOYEES.find(emp => emp.id === id) || null;
+    try {
+      const allEmployees = await employeesApi.getAll();
+      return allEmployees.items.find(emp => emp.id === id) || null;
+    } catch {
+      return null;
+    }
   },
 };

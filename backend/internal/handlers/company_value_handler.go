@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -31,12 +32,17 @@ func (h *CompanyValueHandler) GetAll(c *gin.Context) {
 
 	resp := make([]dto.CompanyValueResponse, len(values))
 	for i, v := range values {
+		var examples []string
+		if v.Examples != "" {
+			json.Unmarshal([]byte(v.Examples), &examples)
+		}
 		resp[i] = dto.CompanyValueResponse{
 			ID:          v.ID,
 			Code:        v.Code,
 			Name:        v.Name,
 			Type:        v.Type,
 			Description: v.Description,
+			Examples:    examples,
 		}
 	}
 
@@ -66,12 +72,17 @@ func (h *CompanyValueHandler) GetByID(c *gin.Context) {
 		return
 	}
 
+	var examples []string
+	if value.Examples != "" {
+		json.Unmarshal([]byte(value.Examples), &examples)
+	}
 	resp := dto.CompanyValueResponse{
 		ID:          value.ID,
 		Code:        value.Code,
 		Name:        value.Name,
 		Type:        value.Type,
 		Description: value.Description,
+		Examples:    examples,
 	}
 
 	c.JSON(http.StatusOK, resp)
@@ -98,12 +109,17 @@ func (h *CompanyValueHandler) GetByType(c *gin.Context) {
 
 	resp := make([]dto.CompanyValueResponse, len(values))
 	for i, v := range values {
+		var examples []string
+		if v.Examples != "" {
+			json.Unmarshal([]byte(v.Examples), &examples)
+		}
 		resp[i] = dto.CompanyValueResponse{
 			ID:          v.ID,
 			Code:        v.Code,
 			Name:        v.Name,
 			Type:        v.Type,
 			Description: v.Description,
+			Examples:    examples,
 		}
 	}
 

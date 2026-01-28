@@ -64,6 +64,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	analyticsHandler := handlers.NewAnalyticsHandler(analyticsService)
 	teamsHandler := handlers.NewTeamsHandler(cardService)
 	companyValueHandler := handlers.NewCompanyValueHandler(companyValueService)
+	employeeHandler := handlers.NewEmployeeHandler(employeeRepo)
 	authHandler := handlers.NewAuthHandler(authService)
 	aiHandler := handlers.NewAIHandler(deepseekService)
 
@@ -82,6 +83,10 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 			// Company Values
 			protected.GET("/company-values", companyValueHandler.GetByType)
 			protected.GET("/company-values/:id", companyValueHandler.GetByID)
+
+			// Employees
+			protected.GET("/employees", employeeHandler.GetAll)
+			protected.GET("/employees/search", employeeHandler.Search)
 
 			// Cards
 			protected.POST("/cards", cardHandler.CreateCard)

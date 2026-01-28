@@ -38,6 +38,7 @@ type CompanyValue struct {
 	Name        string         `gorm:"size:255;not null"`
 	Type        string         `gorm:"size:32;not null"` // e.g. "VALUE" or "CREDO"
 	Description string         `gorm:"type:text;not null"`
+	Examples    string         `gorm:"type:jsonb"` // JSON array of example strings
 	CreatedAt   time.Time      `gorm:"not null"`
 	UpdatedAt   time.Time      `gorm:"not null"`
 	DeletedAt   gorm.DeletedAt `gorm:"index"`

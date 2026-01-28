@@ -15,7 +15,7 @@ import (
 
 // DeepSeekService handles AI text generation using DeepSeek API
 type DeepSeekService interface {
-	GenerateRecognitionText(ctx context.Context, recipientName string, userInput string, valueNames []string) (string, error)
+	GenerateRecognitionText(ctx context.Context, recipientName string, senderName string, senderDepartment string, userInput string, valueNames []string) (string, error)
 }
 
 type deepseekService struct {
@@ -57,8 +57,9 @@ func min(a, b int) int {
 }
 
 // GenerateRecognitionText generates a recognition text using DeepSeek API
-func (s *deepseekService) GenerateRecognitionText(ctx context.Context, recipientName string, userInput string, valueNames []string) (string, error) {
-	log.Printf("INFO: Generating recognition text for recipient: %s, input: %s, values: %v\n", recipientName, userInput, valueNames)
+func (s *deepseekService) GenerateRecognitionText(ctx context.Context, recipientName string, senderName string, senderDepartment string, userInput string, valueNames []string) (string, error) {
+	log.Printf("INFO: Generating recognition text for recipient: %s, sender: %s (%s), input: %s, values: %v\n",
+		recipientName, senderName, senderDepartment, userInput, valueNames)
 
 	// Build the prompt
 	valuesText := ""
@@ -66,8 +67,17 @@ func (s *deepseekService) GenerateRecognitionText(ctx context.Context, recipient
 		valuesText = fmt.Sprintf("，并且要体现以下公司价值观：%s", joinStringsForDeepSeek(valueNames, "、"))
 	}
 
+	senderInfo := ""
+	if senderName != "" {
+		if senderDepartment != "" {
+			senderInfo = fmt.Sprintf("发送人：%s（%s部门）\n", senderName, senderDepartment)
+		} else {
+			senderInfo = fmt.Sprintf("发送人：%s\n", senderName)
+		}
+	}
+
 	prompt := fmt.Sprintf(`请根据以下信息，生成一段温暖、真诚、充满感激之情的感谢文本（彩虹屁风格），用于感谢同事。
-接收人：%s
+%s接收人：%s
 用户输入的关键信息：%s%s
 
 要求：
@@ -79,7 +89,7 @@ func (s *deepseekService) GenerateRecognitionText(ctx context.Context, recipient
 6. 语气要自然、亲切，不要太正式
 7. 小红书式风格，emoji
 
-请直接输出感谢文本，不要包含其他说明文字。`, recipientName, userInput, valuesText)
+请直接输出感谢文本，不要包含其他说明文字。`, senderInfo, recipientName, userInput, valuesText)
 
 	// Build request payload
 	requestBody := map[string]interface{}{
@@ -172,13 +182,21 @@ func (s *deepseekService) GenerateRecognitionText(ctx context.Context, recipient
 // noOpDeepSeekService is a no-op implementation when API key is not configured
 type noOpDeepSeekService struct{}
 
-func (s *noOpDeepSeekService) GenerateRecognitionText(ctx context.Context, recipientName string, userInput string, valueNames []string) (string, error) {
+func (s *noOpDeepSeekService) GenerateRecognitionText(ctx context.Context, recipientName string, senderName string, senderDepartment string, userInput string, valueNames []string) (string, error) {
 	// Return a simple template when API is not configured
 	valuesText := ""
 	if len(valueNames) > 0 {
 		valuesText = fmt.Sprintf("，特别是你在 %s 方面的表现", joinStringsForDeepSeek(valueNames, "、"))
 	}
-	return fmt.Sprintf("感谢 %s%s。%s", recipientName, valuesText, userInput), nil
+	senderPrefix := ""
+	if senderName != "" {
+		senderPrefix = fmt.Sprintf("来自 %s", senderName)
+		if senderDepartment != "" {
+			senderPrefix = fmt.Sprintf("来自 %s（%s部门）", senderName, senderDepartment)
+		}
+		senderPrefix += "："
+	}
+	return fmt.Sprintf("%s感谢 %s%s。%s", senderPrefix, recipientName, valuesText, userInput), nil
 }
 
 // Helper function to join strings with separator

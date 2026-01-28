@@ -13,6 +13,7 @@ export interface CompanyValueSummary {
 
 export interface CompanyValueDetail extends CompanyValueSummary {
   description: string;
+  examples?: string[];
 }
 
 export interface EmojiSummary {

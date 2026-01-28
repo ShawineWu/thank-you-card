@@ -2,6 +2,8 @@ import api from './api';
 
 export interface GenerateTextRequest {
   recipientName: string;
+  senderName?: string;
+  senderDepartment?: string;
   userInput: string;
   valueNames: string[];
 }

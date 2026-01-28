@@ -39,9 +39,6 @@ const CompanyValuesPage = () => {
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <CardTitle className="text-lg mb-2">{value.name}</CardTitle>
-            <CardDescription className="text-xs text-muted-foreground">
-              {value.code}
-            </CardDescription>
           </div>
           <Badge variant={value.type === 'VALUE' ? 'default' : 'success'} className="ml-2">
             {value.type}

@@ -21,9 +21,11 @@ func NewAIHandler(deepseekService services.DeepSeekService) *AIHandler {
 }
 
 type GenerateTextRequest struct {
-	RecipientName string   `json:"recipientName" binding:"required"`
-	UserInput     string   `json:"userInput" binding:"required"`
-	ValueNames    []string `json:"valueNames"`
+	RecipientName    string   `json:"recipientName" binding:"required"`
+	SenderName       string   `json:"senderName"`
+	SenderDepartment string   `json:"senderDepartment"`
+	UserInput        string   `json:"userInput" binding:"required"`
+	ValueNames       []string `json:"valueNames"`
 }
 
 type GenerateTextResponse struct {
@@ -41,7 +43,8 @@ func (h *AIHandler) GenerateRecognitionText(c *gin.Context) {
 		return
 	}
 
-	log.Printf("INFO: Request data - recipient: %s, input: %s, values: %v\n", req.RecipientName, req.UserInput, req.ValueNames)
+	log.Printf("INFO: Request data - recipient: %s, sender: %s (%s), input: %s, values: %v\n",
+		req.RecipientName, req.SenderName, req.SenderDepartment, req.UserInput, req.ValueNames)
 
 	// Validate input
 	if req.RecipientName == "" {
@@ -59,6 +62,8 @@ func (h *AIHandler) GenerateRecognitionText(c *gin.Context) {
 	text, err := h.deepseekService.GenerateRecognitionText(
 		c.Request.Context(),
 		req.RecipientName,
+		req.SenderName,
+		req.SenderDepartment,
 		req.UserInput,
 		req.ValueNames,
 	)
