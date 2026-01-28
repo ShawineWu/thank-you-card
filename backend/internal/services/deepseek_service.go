@@ -77,6 +77,7 @@ func (s *deepseekService) GenerateRecognitionText(ctx context.Context, recipient
 4. 长度控制在300-600字之间（不要超过600字）
 5. 使用中文或英文（根据用户输入的语言选择）
 6. 语气要自然、亲切，不要太正式
+7. 小红书式风格，emoji
 
 请直接输出感谢文本，不要包含其他说明文字。`, recipientName, userInput, valuesText)
 

@@ -97,7 +97,7 @@ func (s *teamsNotificationService) SendCardNotification(ctx context.Context, car
 			"items": []map[string]interface{}{
 				{
 					"type":    "TextBlock",
-					"text":    fmt.Sprintf("**To:** %s", recipientsText),
+					"text":    recipientsText,
 					"wrap":    true,
 					"spacing": "Small",
 					"size":    "Small",
