@@ -71,6 +71,7 @@ const FeedPage = () => {
           cards={data?.items || []} 
           onReactionChange={() => refetch()}
           emptyMessage="No cards found. Be the first to send a thank you card!"
+          readOnly={true}
         />
       </div>
 
