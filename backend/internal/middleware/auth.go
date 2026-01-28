@@ -2,74 +2,91 @@ package middleware
 
 import (
 	"net/http"
-	"os"
-	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
 	"thank-you-card-backend/internal/models"
+	"thank-you-card-backend/internal/repositories"
+	"thank-you-card-backend/internal/services"
 )
 
 // Context keys
 const (
+	ContextCurrentUser     = "currentUser"
 	ContextCurrentEmployee = "currentEmployee"
 )
 
-// MockUserMiddleware attaches a mock current employee to the request context based on env MOCK_USER_ID.
-// In MVP we assume the employee row already exists.
-func MockUserMiddleware() gin.HandlerFunc {
+// AuthMiddleware validates JWT token and attaches user to context
+func AuthMiddleware(authService services.AuthService, userRepo repositories.UserRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		idStr := os.Getenv("MOCK_USER_ID")
-		if idStr == "" {
-			// default to 1 for local dev
-			idStr = "1"
-		}
-		id, err := strconv.ParseUint(idStr, 10, 64)
-		if err != nil || id == 0 {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid mock user id"})
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			return
 		}
 
-		// We don't hit DB here to keep middleware simple; assume caller seeded this user.
-		// Handlers/services that need full employee details can look up from DB if needed.
-		emp := &models.Employee{
-			ID: uint(id),
+		// Extract token from "Bearer <token>"
+		parts := strings.Split(authHeader, " ")
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization header"})
+			return
 		}
-		c.Set(ContextCurrentEmployee, emp)
+
+		tokenString := parts[1]
+		claims, err := authService.ValidateToken(tokenString)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+			return
+		}
+
+		// Load user from database
+		user, err := userRepo.GetByID(c.Request.Context(), claims.UserID)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "user not found"})
+			return
+		}
+
+		c.Set(ContextCurrentUser, user)
+		if user.Employee != nil {
+			c.Set(ContextCurrentEmployee, user.Employee)
+		} else if user.EmployeeID != nil {
+			// Load employee if not preloaded
+			dbVal, exists := c.Get("db")
+			if exists {
+				if db, ok := dbVal.(*gorm.DB); ok {
+					var emp models.Employee
+					if err := db.First(&emp, *user.EmployeeID).Error; err == nil {
+						c.Set(ContextCurrentEmployee, &emp)
+					}
+				}
+			}
+		}
 		c.Next()
 	}
 }
 
-// RequireHRAdmin checks the attached employee's IsHRAdmin flag.
-// It loads the full employee record from DB to verify IsHRAdmin status.
-func RequireHRAdmin(db *gorm.DB) gin.HandlerFunc {
+// RequireHRAdmin checks if user has HR or ADMIN role
+func RequireHRAdmin() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		val, exists := c.Get(ContextCurrentEmployee)
+		val, exists := c.Get(ContextCurrentUser)
 		if !exists {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			return
 		}
-		emp, ok := val.(*models.Employee)
-		if !ok || emp == nil {
+		user, ok := val.(*models.User)
+		if !ok || user == nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			return
 		}
 
-		// Load full employee record to check IsHRAdmin
-		var fullEmployee models.Employee
-		if err := db.First(&fullEmployee, emp.ID).Error; err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "employee not found"})
-			return
-		}
-
-		if !fullEmployee.IsHRAdmin {
+		// Check if user has HR or ADMIN role
+		if user.Role != "HR" && user.Role != "ADMIN" {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "forbidden: hr admin only"})
 			return
 		}
 
-		// Update context with full employee record
-		c.Set(ContextCurrentEmployee, &fullEmployee)
 		c.Next()
 	}
 }

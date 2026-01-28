@@ -6,6 +6,19 @@ import (
 	"gorm.io/gorm"
 )
 
+// User represents a user account with login credentials.
+type User struct {
+	ID         uint           `gorm:"primaryKey"`
+	Username   string         `gorm:"size:255;uniqueIndex;not null"`
+	Password   string         `gorm:"size:255;not null"`                   // bcrypt hashed
+	Role       string         `gorm:"size:32;not null;default:'EMPLOYEE'"` // EMPLOYEE, HR, ADMIN
+	EmployeeID *uint          `gorm:"index"`                               // Optional link to Employee
+	Employee   *Employee      `gorm:"foreignKey:EmployeeID"`
+	CreatedAt  time.Time      `gorm:"not null"`
+	UpdatedAt  time.Time      `gorm:"not null"`
+	DeletedAt  gorm.DeletedAt `gorm:"index"`
+}
+
 // Employee represents an employee that can send/receive cards and may be an HR admin.
 type Employee struct {
 	ID         uint           `gorm:"primaryKey"`

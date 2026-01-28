@@ -23,8 +23,11 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	config.AllowCredentials = true
 	r.Use(cors.New(config))
 
-	// global middleware
-	r.Use(middleware.MockUserMiddleware())
+	// Store db in context for middleware
+	r.Use(func(c *gin.Context) {
+		c.Set("db", db)
+		c.Next()
+	})
 
 	// Repositories
 	cardRepo := repositories.NewCardRepository(db)
@@ -32,12 +35,14 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	analyticsRepo := repositories.NewAnalyticsRepository(db)
 	employeeRepo := repositories.NewEmployeeRepository(db)
 	companyValueRepo := repositories.NewCompanyValueRepository(db)
+	userRepo := repositories.NewUserRepository(db)
 
 	// Services
 	cardService := services.NewCardService(cardRepo, emojiRepo)
 	statsService := services.NewStatsService(cardRepo)
 	analyticsService := services.NewAnalyticsService(analyticsRepo, cardRepo, employeeRepo)
 	companyValueService := services.NewCompanyValueService(companyValueRepo)
+	authService := services.NewAuthService(userRepo, employeeRepo)
 
 	// Handlers
 	cardHandler := handlers.NewCardHandler(cardService)
@@ -45,44 +50,53 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	analyticsHandler := handlers.NewAnalyticsHandler(analyticsService)
 	teamsHandler := handlers.NewTeamsHandler(cardService)
 	companyValueHandler := handlers.NewCompanyValueHandler(companyValueService)
+	authHandler := handlers.NewAuthHandler(authService)
 
 	api := r.Group("/api")
 	{
-		// Company Values
-		api.GET("/company-values", companyValueHandler.GetByType)
-		api.GET("/company-values/:id", companyValueHandler.GetByID)
+		// Auth (public)
+		api.POST("/auth/login", authHandler.Login)
 
-		// Cards
-		api.POST("/cards", cardHandler.CreateCard)
-		api.GET("/cards/feed", cardHandler.GetFeed)
-		api.GET("/cards/me/received", cardHandler.GetMyReceived)
-		api.GET("/cards/me/sent", cardHandler.GetMySent)
-
-		// Personal Stats
-		api.GET("/cards/me/stats", statsHandler.GetPersonalStats)
-		// Top recipients is available to all employees (not just HR)
-		api.GET("/cards/top-recipients", analyticsHandler.GetTopRecognizedEmployees)
-
-		// Emoji reactions
-		api.POST("/cards/:id/reactions", cardHandler.React)
-		api.DELETE("/cards/:id/reactions", cardHandler.RemoveReaction)
-
-		// Teams Bot endpoints (simplified)
-		teams := api.Group("/teams")
+		// Protected routes (require authentication)
+		protected := api.Group("")
+		protected.Use(middleware.AuthMiddleware(authService, userRepo))
 		{
-			teams.GET("/feed", teamsHandler.GetFeed)
-			teams.GET("/cards/:id", teamsHandler.GetCardDetail)
-		}
+			// Company Values
+			protected.GET("/company-values", companyValueHandler.GetByType)
+			protected.GET("/company-values/:id", companyValueHandler.GetByID)
 
-		// HR Analytics (requires HR admin)
-		analytics := api.Group("/analytics")
-		analytics.Use(middleware.RequireHRAdmin(db))
-		{
-			analytics.GET("/dashboard", analyticsHandler.GetDashboard)
-			analytics.GET("/recognizers", analyticsHandler.GetMostActiveRecognizers)
-			analytics.GET("/teams", analyticsHandler.GetTeamPatterns)
-			analytics.GET("/values", analyticsHandler.GetValuesDistribution)
-			analytics.GET("/export", analyticsHandler.ExportCards)
+			// Cards
+			protected.POST("/cards", cardHandler.CreateCard)
+			protected.GET("/cards/feed", cardHandler.GetFeed)
+			protected.GET("/cards/me/received", cardHandler.GetMyReceived)
+			protected.GET("/cards/me/sent", cardHandler.GetMySent)
+
+			// Personal Stats
+			protected.GET("/cards/me/stats", statsHandler.GetPersonalStats)
+			// Top recipients is available to all employees (not just HR)
+			protected.GET("/cards/top-recipients", analyticsHandler.GetTopRecognizedEmployees)
+
+			// Emoji reactions
+			protected.POST("/cards/:id/reactions", cardHandler.React)
+			protected.DELETE("/cards/:id/reactions", cardHandler.RemoveReaction)
+
+			// Teams Bot endpoints (simplified)
+			teams := protected.Group("/teams")
+			{
+				teams.GET("/feed", teamsHandler.GetFeed)
+				teams.GET("/cards/:id", teamsHandler.GetCardDetail)
+			}
+
+			// HR Analytics (requires HR or ADMIN role)
+			analytics := protected.Group("/analytics")
+			analytics.Use(middleware.RequireHRAdmin())
+			{
+				analytics.GET("/dashboard", analyticsHandler.GetDashboard)
+				analytics.GET("/recognizers", analyticsHandler.GetMostActiveRecognizers)
+				analytics.GET("/teams", analyticsHandler.GetTeamPatterns)
+				analytics.GET("/values", analyticsHandler.GetValuesDistribution)
+				analytics.GET("/export", analyticsHandler.ExportCards)
+			}
 		}
 	}
 

@@ -1,5 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider } from './contexts/AuthContext'
 import Layout from './components/Layout'
+import ProtectedRoute from './components/ProtectedRoute'
+import LoginPage from './pages/Login/LoginPage'
 import FeedPage from './pages/Feed/FeedPage'
 import CreateCardPage from './pages/CreateCard/CreateCardPage'
 import MyCardsPage from './pages/MyCards/MyCardsPage'
@@ -14,25 +17,28 @@ import CompanyValuesPage from './pages/CompanyValues/CompanyValuesPage'
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<FeedPage />} />
-          <Route path="create" element={<CreateCardPage />} />
-          <Route path="my-cards" element={<MyCardsPage />} />
-          <Route path="stats" element={<StatsPage />} />
-          <Route path="top-employees" element={<TopEmployeesPage />} />
-          <Route path="company-values" element={<CompanyValuesPage />} />
-          <Route path="analytics" element={<AnalyticsLayout />}>
-            <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<DashboardPage />} />
-            <Route path="recognizers" element={<RecognizersPage />} />
-            <Route path="teams" element={<TeamPatternsPage />} />
-            <Route path="values" element={<ValuesDistributionPage />} />
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/" element={<Layout />}>
+            <Route index element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
+            <Route path="create" element={<ProtectedRoute><CreateCardPage /></ProtectedRoute>} />
+            <Route path="my-cards" element={<ProtectedRoute><MyCardsPage /></ProtectedRoute>} />
+            <Route path="stats" element={<ProtectedRoute><StatsPage /></ProtectedRoute>} />
+            <Route path="top-employees" element={<ProtectedRoute><TopEmployeesPage /></ProtectedRoute>} />
+            <Route path="company-values" element={<ProtectedRoute><CompanyValuesPage /></ProtectedRoute>} />
+            <Route path="analytics" element={<ProtectedRoute requireHR><AnalyticsLayout /></ProtectedRoute>}>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="recognizers" element={<RecognizersPage />} />
+              <Route path="teams" element={<TeamPatternsPage />} />
+              <Route path="values" element={<ValuesDistributionPage />} />
+            </Route>
           </Route>
-        </Route>
-      </Routes>
-    </BrowserRouter>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   )
 }
 

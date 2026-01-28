@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"thank-you-card-backend/internal/models"
 
 	"gorm.io/gorm"
@@ -13,6 +15,7 @@ import (
 // AutoMigrateAndSeed runs Gorm migrations and seeds static reference data.
 func AutoMigrateAndSeed(gormDB *gorm.DB) error {
 	if err := gormDB.AutoMigrate(
+		&models.User{},
 		&models.Employee{},
 		&models.CompanyValue{},
 		&models.Card{},
@@ -29,6 +32,10 @@ func AutoMigrateAndSeed(gormDB *gorm.DB) error {
 
 	if err := seedMockEmployees(gormDB); err != nil {
 		return fmt.Errorf("seed mock employees: %w", err)
+	}
+
+	if err := seedUsers(gormDB); err != nil {
+		return fmt.Errorf("seed users: %w", err)
 	}
 
 	return nil

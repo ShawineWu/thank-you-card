@@ -1,4 +1,4 @@
-.PHONY: help backend-dev backend-build backend-run frontend-dev frontend-build frontend-install db-init db-reset clean
+.PHONY: help backend-dev backend-build backend-run frontend-dev frontend-build frontend-install db-init db-reset clean stop stop-backend stop-frontend
 
 # Variables
 BACKEND_DIR=backend
@@ -16,8 +16,19 @@ help: ## Show this help message
 	@echo 'Available targets:'
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
+# Service management
+stop: stop-backend stop-frontend ## Stop all services (backend and frontend)
+
+stop-backend: ## Stop backend server
+	@echo "Stopping backend server..."
+	@lsof -ti:8056 2>/dev/null | xargs kill -9 2>/dev/null || echo "Backend not running"
+
+stop-frontend: ## Stop frontend server
+	@echo "Stopping frontend server..."
+	@lsof -ti:3000 2>/dev/null | xargs kill -9 2>/dev/null || echo "Frontend not running"
+
 # Backend targets
-backend-dev: ## Start backend development server
+backend-dev: stop-backend ## Start backend development server
 	@echo "Starting backend server..."
 	@cd $(BACKEND_DIR) && \
 		DATABASE_DSN="postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable" \
@@ -42,7 +53,7 @@ frontend-install: ## Install frontend dependencies
 	@echo "Installing frontend dependencies..."
 	@cd $(FRONTEND_DIR) && npm install
 
-frontend-dev: ## Start frontend development server
+frontend-dev: stop-frontend ## Start frontend development server
 	@echo "Starting frontend development server..."
 	@cd $(FRONTEND_DIR) && npm run dev
 
@@ -70,10 +81,14 @@ db-reset: ## Reset database (WARNING: drops and recreates database)
 # Development workflow
 dev: db-init backend-dev ## Initialize DB and start backend (in one terminal)
 
-dev-full: db-init ## Start both backend and frontend (requires two terminals)
+dev-full: db-init stop ## Start both backend and frontend (requires two terminals)
 	@echo "Starting full development environment..."
 	@echo "Backend will run in this terminal. Open another terminal and run 'make frontend-dev'"
 	@$(MAKE) backend-dev
+
+dev-all: db-init stop ## Start both backend and frontend dev servers (same terminal)
+	@echo "Starting backend and frontend dev servers..."
+	@$(MAKE) -j2 backend-dev frontend-dev
 
 # Setup for new developers
 setup: db-init frontend-install ## Complete setup for new developers
@@ -94,8 +109,10 @@ clean: ## Clean build artifacts
 	@echo "Clean complete"
 
 # Quick start (assumes DB is already running)
-start: db-init ## Quick start: init DB and show instructions
+start: db-init stop ## Quick start: init DB and show instructions
 	@echo ""
 	@echo "Database initialized. Now you can:"
 	@echo "  Terminal 1: make backend-dev"
 	@echo "  Terminal 2: make frontend-dev"
+	@echo ""
+	@echo "Or use 'make dev-all' to start both in one terminal"

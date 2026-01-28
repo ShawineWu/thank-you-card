@@ -23,12 +23,23 @@ func NewCardHandler(cardService services.CardService) *CardHandler {
 }
 
 func getCurrentEmployee(c *gin.Context) *models.Employee {
+	// Try to get from context
 	v, ok := c.Get(middleware.ContextCurrentEmployee)
-	if !ok {
-		return nil
+	if ok {
+		if emp, ok := v.(*models.Employee); ok && emp != nil {
+			return emp
+		}
 	}
-	emp, _ := v.(*models.Employee)
-	return emp
+
+	// Fallback: try to get from user
+	userVal, ok := c.Get(middleware.ContextCurrentUser)
+	if ok {
+		if user, ok := userVal.(*models.User); ok && user != nil && user.Employee != nil {
+			return user.Employee
+		}
+	}
+
+	return nil
 }
 
 func (h *CardHandler) CreateCard(c *gin.Context) {

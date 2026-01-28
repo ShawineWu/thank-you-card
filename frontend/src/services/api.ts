@@ -14,7 +14,11 @@ export const api: AxiosInstance = axios.create({
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
-    // Add any auth tokens here if needed in the future
+    // Add auth token to requests
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => {
@@ -28,6 +32,16 @@ api.interceptors.response.use(
   (error: AxiosError<ApiError>) => {
     // Handle common errors
     if (error.response) {
+      const status = error.response.status;
+      // Handle 401 Unauthorized - clear auth and redirect to login
+      if (status === 401) {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
+        // Redirect to login if not already there
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+      }
       const message = error.response.data?.error || error.message;
       console.error('API Error:', message);
     } else if (error.request) {

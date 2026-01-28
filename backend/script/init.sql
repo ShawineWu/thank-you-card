@@ -26,3 +26,20 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 --   1. Create all tables (employees, company_values, cards, etc.)
 --   2. Seed company values and credos
 --   3. Seed mock employees (ID: 1 = regular, ID: 2 = HR admin)
+--   4. Seed test user accounts (employee, hr, admin)
+
+-- ============================================
+-- TEST DATA - Execute after tables are created
+-- ============================================
+-- IMPORTANT: Run the seed script AFTER running the Go application once
+-- to ensure all tables are created by Gorm AutoMigrate
+-- 
+-- To seed test data:
+-- 1. Start the backend once: make backend-dev (then stop it)
+-- 2. Run the seed script: psql -h localhost -U postgres -d thankyoucard -f backend/script/seed_test_data.sql
+-- 
+-- The seed script will create:
+-- - 8 additional test employees (Alice, Bob, Carol, David, Eve, Frank, Grace, Henry)
+-- - 7 test cards with various scenarios (single/multiple recipients, different dates)
+-- - Card recipients and value associations
+-- - Emoji reactions on cards

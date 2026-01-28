@@ -1,9 +1,12 @@
-import { Outlet, Link, useLocation } from 'react-router-dom'
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from './ui/button'
-import { Heart, Home, Plus, Inbox, BarChart3, TrendingUp, Settings, BookOpen } from 'lucide-react'
+import { Heart, Home, Plus, Inbox, BarChart3, TrendingUp, Settings, BookOpen, LogOut } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
 
 const Layout = () => {
   const location = useLocation()
+  const { isAuthenticated, isHROrAdmin, user, logout } = useAuth()
+  const navigate = useNavigate()
 
   const navItems = [
     { path: '/', label: 'Feed', icon: Home },
@@ -13,6 +16,11 @@ const Layout = () => {
     { path: '/top-employees', label: 'Top 10', icon: TrendingUp },
     { path: '/company-values', label: 'Values', icon: BookOpen },
   ]
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
+  }
 
   const isActive = (path: string) => {
     if (path === '/') {
@@ -46,15 +54,31 @@ const Layout = () => {
                   </Link>
                 )
               })}
-              <Link to="/analytics">
-                <Button
-                  variant={location.pathname.startsWith('/analytics') ? 'default' : 'ghost'}
-                  className="flex items-center space-x-2"
-                >
-                  <Settings className="h-4 w-4" />
-                  <span>Analytics</span>
-                </Button>
-              </Link>
+              {isHROrAdmin && (
+                <Link to="/analytics">
+                  <Button
+                    variant={location.pathname.startsWith('/analytics') ? 'default' : 'ghost'}
+                    className="flex items-center space-x-2"
+                  >
+                    <Settings className="h-4 w-4" />
+                    <span>Analytics</span>
+                  </Button>
+                </Link>
+              )}
+              {isAuthenticated && (
+                <div className="flex items-center space-x-2 ml-4 pl-4 border-l">
+                  <span className="text-sm text-muted-foreground">{user?.username}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleLogout}
+                    className="flex items-center space-x-1"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Logout</span>
+                  </Button>
+                </div>
+              )}
             </nav>
           </div>
         </div>

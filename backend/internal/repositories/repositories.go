@@ -50,6 +50,12 @@ type CompanyValueRepository interface {
 	GetByType(ctx context.Context, valueType string) ([]models.CompanyValue, error)
 }
 
+type UserRepository interface {
+	GetByUsername(ctx context.Context, username string) (*models.User, error)
+	GetByID(ctx context.Context, id uint) (*models.User, error)
+	Create(ctx context.Context, user *models.User) error
+}
+
 type TopEmployee struct {
 	EmployeeID uint
 	Name       string
