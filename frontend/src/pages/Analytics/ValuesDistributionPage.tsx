@@ -3,17 +3,15 @@ import { useQuery } from '@tanstack/react-query'
 import { analyticsApi } from '@/services/analytics'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, PieChart, Calendar } from 'lucide-react'
+import { Loader2, Calendar, Tag } from 'lucide-react'
 import { format, subDays } from 'date-fns'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
 import ValueCardsDialog from '@/components/Analytics/ValueCardsDialog'
 import ValueDetailDialog from '@/components/CompanyValues/ValueDetailDialog'
 import { CompanyValueSummary, CompanyValueDetail } from '@/types/card'
 import { companyValuesApi } from '@/services/companyValues'
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#8dd1e1', '#d084d0']
+import WordCloud from '@/components/Analytics/WordCloud'
 
 const ValuesDistributionPage = () => {
   const [from, setFrom] = useState<string>(
@@ -53,8 +51,8 @@ const ValuesDistributionPage = () => {
     )
   }
 
-  const chartData = data?.map(item => ({
-    name: item.name,
+  const wordCloudData = data?.map(item => ({
+    text: item.name,
     value: item.count,
     percentage: item.percentage,
   })) || []
@@ -117,36 +115,25 @@ const ValuesDistributionPage = () => {
         </CardContent>
       </Card>
 
-      {/* Chart */}
-      {chartData.length > 0 && (
+      {/* Word Cloud */}
+      {wordCloudData.length > 0 && (
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <PieChart className="h-5 w-5" />
+              <Tag className="h-5 w-5" />
               <span>Values Distribution</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={400}>
-              <RechartsPieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percentage }) => `${name}: ${percentage.toFixed(1)}%`}
-                  outerRadius={120}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {chartData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </RechartsPieChart>
-            </ResponsiveContainer>
+            <WordCloud
+              data={wordCloudData}
+              onClick={(item) => {
+                const valueItem = data?.find(d => d.name === item.text)
+                if (valueItem) {
+                  handleCardsClick(valueItem.valueId, valueItem.name)
+                }
+              }}
+            />
           </CardContent>
         </Card>
       )}
