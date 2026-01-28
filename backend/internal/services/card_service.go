@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"thank-you-card-backend/internal/models"
@@ -28,14 +29,16 @@ type CardService interface {
 }
 
 type cardService struct {
-	cardRepo  repositories.CardRepository
-	emojiRepo repositories.EmojiReactionRepository
+	cardRepo          repositories.CardRepository
+	emojiRepo         repositories.EmojiReactionRepository
+	teamsNotification TeamsNotificationService
 }
 
-func NewCardService(cardRepo repositories.CardRepository, emojiRepo repositories.EmojiReactionRepository) CardService {
+func NewCardService(cardRepo repositories.CardRepository, emojiRepo repositories.EmojiReactionRepository, teamsNotification TeamsNotificationService) CardService {
 	return &cardService{
-		cardRepo:  cardRepo,
-		emojiRepo: emojiRepo,
+		cardRepo:          cardRepo,
+		emojiRepo:         emojiRepo,
+		teamsNotification: teamsNotification,
 	}
 }
 
@@ -60,10 +63,30 @@ func (s *cardService) CreateCard(ctx context.Context, sender *models.Employee, r
 		return nil, err
 	}
 
-	// For now, we skip actual Teams HTTP push.
-	// Future: inject NotificationService to send card to Teams channel.
+	// Load the complete card with all relations for Teams notification
+	completeCard, err := s.cardRepo.GetByID(ctx, card.ID)
+	if err != nil {
+		// Log error but don't fail card creation if notification fails
+		// Card was successfully created, notification is optional
+		return card, nil
+	}
 
-	return card, nil
+	// Send Teams notification asynchronously (non-blocking)
+	// We don't wait for the notification to complete to avoid blocking the response
+	go func() {
+		// Use background context for async notification
+		notificationCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		if err := s.teamsNotification.SendCardNotification(notificationCtx, completeCard); err != nil {
+			// Log error but don't fail the request
+			log.Printf("ERROR: Failed to send Teams notification for card ID %d: %v", completeCard.ID, err)
+		} else {
+			log.Printf("SUCCESS: Sent Teams notification for card ID: %d", completeCard.ID)
+		}
+	}()
+
+	return completeCard, nil
 }
 
 func (s *cardService) GetCompanyFeed(ctx context.Context, filters repositories.CardFilters) ([]models.Card, int64, error) {

@@ -5,21 +5,32 @@ import { cardsApi } from '@/services/cards'
 import { CreateCardRequest, EmployeeSummary } from '@/types/card'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import RecipientSelector from '@/components/Forms/RecipientSelector'
 import ValueSelector from '@/components/Forms/ValueSelector'
-import { Loader2, Send } from 'lucide-react'
+import TeamsCardPreview from '@/components/Card/TeamsCardPreview'
+import { Loader2, Send, Eye } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 
 const MAX_REASON_LENGTH = 2000
 
 const CreateCardPage = () => {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { user } = useAuth()
 
   const [recipients, setRecipients] = useState<EmployeeSummary[]>([])
   const [valueIds, setValueIds] = useState<number[]>([])
   const [reason, setReason] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [previewOpen, setPreviewOpen] = useState(false)
 
   const createCardMutation = useMutation({
     mutationFn: (data: CreateCardRequest) => cardsApi.createCard(data),
@@ -72,6 +83,10 @@ const CreateCardPage = () => {
   }
 
   const remainingChars = MAX_REASON_LENGTH - reason.length
+
+  // Get sender info from auth context
+  const senderName = user?.employee?.name || user?.username || '...'
+  const senderDepartment = user?.employee?.department || '...'
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -148,6 +163,15 @@ const CreateCardPage = () => {
                 Cancel
               </Button>
               <Button
+                type="button"
+                variant="outline"
+                onClick={() => setPreviewOpen(true)}
+                disabled={createCardMutation.isPending}
+              >
+                <Eye className="mr-2 h-4 w-4" />
+                Preview
+              </Button>
+              <Button
                 type="submit"
                 disabled={createCardMutation.isPending}
               >
@@ -167,6 +191,29 @@ const CreateCardPage = () => {
           </CardContent>
         </Card>
       </form>
+
+      {/* Preview Dialog */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Teams Card Preview</DialogTitle>
+            <DialogDescription>
+              This is how your card will appear in Teams
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4">
+            <TeamsCardPreview
+              sender={{
+                name: senderName,
+                department: senderDepartment,
+              }}
+              recipients={recipients}
+              reason={reason}
+              selectedValueIds={valueIds}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

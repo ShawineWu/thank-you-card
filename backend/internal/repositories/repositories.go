@@ -26,6 +26,7 @@ type CardFilters struct {
 
 type CardRepository interface {
 	CreateCardWithRelations(ctx context.Context, card *models.Card, recipients []uint, valueIDs []uint) error
+	GetByID(ctx context.Context, id uint) (*models.Card, error)
 	GetFeed(ctx context.Context, filters CardFilters) ([]models.Card, int64, error)
 	GetByRecipient(ctx context.Context, recipientID uint, filters CardFilters) ([]models.Card, int64, error)
 	GetBySender(ctx context.Context, senderID uint, filters CardFilters) ([]models.Card, int64, error)
@@ -108,6 +109,20 @@ func (r *cardRepository) CreateCardWithRelations(ctx context.Context, card *mode
 
 		return nil
 	})
+}
+
+// GetByID retrieves a card by ID with all relations loaded
+func (r *cardRepository) GetByID(ctx context.Context, id uint) (*models.Card, error) {
+	var card models.Card
+	if err := r.db.WithContext(ctx).
+		Preload("Sender").
+		Preload("Recipients.Recipient").
+		Preload("Values.CompanyValue").
+		Preload("Reactions").
+		First(&card, id).Error; err != nil {
+		return nil, err
+	}
+	return &card, nil
 }
 
 // For now, feed and filter queries will be simple joins with pagination.

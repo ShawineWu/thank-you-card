@@ -50,7 +50,8 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	userRepo := repositories.NewUserRepository(db)
 
 	// Services
-	cardService := services.NewCardService(cardRepo, emojiRepo)
+	teamsNotificationService := services.NewTeamsNotificationService()
+	cardService := services.NewCardService(cardRepo, emojiRepo, teamsNotificationService)
 	statsService := services.NewStatsService(cardRepo)
 	analyticsService := services.NewAnalyticsService(analyticsRepo, cardRepo, employeeRepo)
 	companyValueService := services.NewCompanyValueService(companyValueRepo)
