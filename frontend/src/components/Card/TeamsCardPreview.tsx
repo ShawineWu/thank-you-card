@@ -45,13 +45,6 @@ const TeamsCardPreview = ({ sender, recipients, reason, selectedValueIds }: Team
           </p>
         </div>
 
-        {/* To section - small font at the beginning */}
-        <div className="space-y-2">
-          <p className="text-sm text-foreground">
-            <span className="font-semibold">To:</span> {recipientsText}
-          </p>
-        </div>
-
         {/* Reason/Message section - before values */}
         <div className="space-y-2">
           <div className="bg-muted/20 rounded-lg p-4 min-h-[120px]">
@@ -82,13 +75,6 @@ const TeamsCardPreview = ({ sender, recipients, reason, selectedValueIds }: Team
         <div className="pt-4">
           <p className="text-center text-base font-semibold text-foreground">
             🌈 Working with you is a lucky thing!
-          </p>
-        </div>
-
-        {/* Sender signature at the end */}
-        <div className="pt-2">
-          <p className="text-sm text-muted-foreground">
-            {sender.name || '...'} ({sender.department || '...'})
           </p>
         </div>
       </div>

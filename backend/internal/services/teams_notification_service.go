@@ -41,26 +41,10 @@ func NewTeamsNotificationService() TeamsNotificationService {
 
 // SendCardNotification sends a card notification to Teams channel
 func (s *teamsNotificationService) SendCardNotification(ctx context.Context, card *models.Card) error {
-	// Build recipient names
-	recipientNames := make([]string, len(card.Recipients))
-	for i, r := range card.Recipients {
-		recipientNames[i] = r.Recipient.Name
-	}
-
 	// Build value names
 	valueNames := make([]string, len(card.Values))
 	for i, v := range card.Values {
 		valueNames[i] = v.CompanyValue.Name
-	}
-
-	// Format recipients
-	recipientsText := ""
-	if len(recipientNames) == 1 {
-		recipientsText = recipientNames[0]
-	} else if len(recipientNames) == 2 {
-		recipientsText = fmt.Sprintf("%s and %s", recipientNames[0], recipientNames[1])
-	} else if len(recipientNames) > 2 {
-		recipientsText = fmt.Sprintf("%s and %d others", recipientNames[0], len(recipientNames)-1)
 	}
 
 	// Build clean and simple Adaptive Card for Teams
@@ -90,20 +74,6 @@ func (s *teamsNotificationService) SendCardNotification(ctx context.Context, car
 				},
 			},
 			"spacing": "Medium",
-		},
-		// To section - small font at the beginning
-		{
-			"type": "Container",
-			"items": []map[string]interface{}{
-				{
-					"type":    "TextBlock",
-					"text":    recipientsText,
-					"wrap":    true,
-					"spacing": "Small",
-					"size":    "Small",
-				},
-			},
-			"spacing": "Small",
 		},
 	}
 
@@ -162,22 +132,6 @@ func (s *teamsNotificationService) SendCardNotification(ctx context.Context, car
 				"spacing":             "None",
 				"size":                "Medium",
 				"weight":              "Bolder",
-			},
-		},
-	})
-
-	// Add sender signature at the end
-	adaptiveCardBody = append(adaptiveCardBody, map[string]interface{}{
-		"type":    "Container",
-		"spacing": "Small",
-		"items": []map[string]interface{}{
-			{
-				"type":     "TextBlock",
-				"text":     fmt.Sprintf("%s (%s)", card.Sender.Name, card.Sender.Department),
-				"wrap":     true,
-				"spacing":  "None",
-				"size":     "Small",
-				"isSubtle": true,
 			},
 		},
 	})
