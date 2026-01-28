@@ -26,6 +26,7 @@ out/
 
 # IDE - VSCode
 .vscode/
+!.vscode/extensions.json
 
 # IDE - Vim
 *.swp
@@ -64,3 +65,24 @@ temp/
 dist/
 build/
 bin/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Backend binaries and build artifacts
+backend/bin/
+backend/server
+backend/*/bin/
+backend/**/*.exe
+backend/**/*.dll
+backend/**/*.so
+backend/**/*.dylib
+backend/**/server
+backend/**/thank-you-card-backend
+# Additional backend build outputs
+backend/cmd/*/server
+backend/cmd/*/*.exe
+
+/plan-zh.md
