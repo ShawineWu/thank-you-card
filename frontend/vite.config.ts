@@ -11,7 +11,8 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3000,
+    host: '0.0.0.0', // 允许从局域网访问
+    port: 8099,
     proxy: {
       '/api': {
         target: 'http://localhost:8056',

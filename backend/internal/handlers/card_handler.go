@@ -51,7 +51,7 @@ func (h *CardHandler) CreateCard(c *gin.Context) {
 
 	emp := getCurrentEmployee(c)
 	if emp == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "employee not found: user must be linked to an employee"})
 		return
 	}
 
@@ -94,7 +94,7 @@ func (h *CardHandler) GetFeed(c *gin.Context) {
 func (h *CardHandler) GetMyReceived(c *gin.Context) {
 	emp := getCurrentEmployee(c)
 	if emp == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "employee not found: user must be linked to an employee"})
 		return
 	}
 	ctx := c.Request.Context()
@@ -121,7 +121,7 @@ func (h *CardHandler) GetMyReceived(c *gin.Context) {
 func (h *CardHandler) GetMySent(c *gin.Context) {
 	emp := getCurrentEmployee(c)
 	if emp == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "employee not found: user must be linked to an employee"})
 		return
 	}
 	ctx := c.Request.Context()
@@ -148,7 +148,7 @@ func (h *CardHandler) GetMySent(c *gin.Context) {
 func (h *CardHandler) React(c *gin.Context) {
 	emp := getCurrentEmployee(c)
 	if emp == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "employee not found: user must be linked to an employee"})
 		return
 	}
 
@@ -182,7 +182,7 @@ func (h *CardHandler) React(c *gin.Context) {
 func (h *CardHandler) RemoveReaction(c *gin.Context) {
 	emp := getCurrentEmployee(c)
 	if emp == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "employee not found: user must be linked to an employee"})
 		return
 	}
 
@@ -242,7 +242,8 @@ func toCardResponse(card *models.Card) dto.CardResponse {
 		Department: card.Sender.Department,
 	}
 
-	var recipients []dto.EmployeeSummary
+	// Initialize as empty slices to ensure JSON serializes as [] instead of null
+	recipients := make([]dto.EmployeeSummary, 0, len(card.Recipients))
 	for _, cr := range card.Recipients {
 		recipients = append(recipients, dto.EmployeeSummary{
 			ID:         cr.Recipient.ID,
@@ -251,7 +252,7 @@ func toCardResponse(card *models.Card) dto.CardResponse {
 		})
 	}
 
-	var values []dto.CompanyValueSummary
+	values := make([]dto.CompanyValueSummary, 0, len(card.Values))
 	for _, cv := range card.Values {
 		values = append(values, dto.CompanyValueSummary{
 			ID:   cv.CompanyValue.ID,
@@ -274,7 +275,8 @@ func toCardResponse(card *models.Card) dto.CardResponse {
 		es.UserIDs = append(es.UserIDs, r.UserID)
 	}
 
-	var reactions []dto.EmojiSummary
+	// Initialize as empty slice to ensure JSON serializes as [] instead of null
+	reactions := make([]dto.EmojiSummary, 0, len(emojiMap))
 	for _, v := range emojiMap {
 		reactions = append(reactions, *v)
 	}

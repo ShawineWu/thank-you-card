@@ -44,7 +44,8 @@ func main() {
 		port = "8080"
 	}
 
-	if err := r.Run(":" + port); err != nil {
+	// Bind to 0.0.0.0 to allow access from local network
+	if err := r.Run("0.0.0.0:" + port); err != nil {
 		log.Fatalf("failed to run server: %v", err)
 	}
 }

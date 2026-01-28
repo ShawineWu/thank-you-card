@@ -7,9 +7,10 @@ import ValueBadge from './ValueBadge'
 interface CardItemProps {
   card: CardResponse
   onReactionChange?: () => void
+  readOnly?: boolean // If true, reactions are display-only (e.g., in Analytics pages)
 }
 
-const CardItem = ({ card, onReactionChange }: CardItemProps) => {
+const CardItem = ({ card, onReactionChange, readOnly = false }: CardItemProps) => {
   return (
     <Card className="mb-4">
       <CardHeader>
@@ -46,6 +47,7 @@ const CardItem = ({ card, onReactionChange }: CardItemProps) => {
           cardId={card.id} 
           reactions={card.reactions}
           onReactionChange={onReactionChange}
+          readOnly={readOnly}
         />
       </CardContent>
     </Card>

@@ -6,7 +6,7 @@ interface ValueBadgeProps {
 }
 
 const ValueBadge = ({ value }: ValueBadgeProps) => {
-  const variant = value.type === 'VALUE' ? 'default' : 'secondary'
+  const variant = value.type === 'VALUE' ? 'default' : 'success'
   
   return (
     <Badge variant={variant} className="text-xs">

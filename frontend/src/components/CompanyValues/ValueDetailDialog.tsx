@@ -17,7 +17,7 @@ const ValueDetailDialog = ({ value, open, onOpenChange }: ValueDetailDialogProps
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-2xl">{value.name}</DialogTitle>
-            <Badge variant={value.type === 'VALUE' ? 'default' : 'secondary'}>
+            <Badge variant={value.type === 'VALUE' ? 'default' : 'success'}>
               {value.type}
             </Badge>
           </div>

@@ -139,7 +139,7 @@ const ValuesDistributionPage = () => {
                   className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent/50 transition-colors"
                 >
                   <div className="flex items-center space-x-3">
-                    <Badge variant={item.type === 'VALUE' ? 'default' : 'secondary'}>
+                    <Badge variant={item.type === 'VALUE' ? 'default' : 'success'}>
                       {item.type}
                     </Badge>
                     <div>

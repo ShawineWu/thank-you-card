@@ -11,13 +11,13 @@ type LoginResponse struct {
 }
 
 type UserResponse struct {
-	ID       uint             `json:"id"`
-	Username string           `json:"username"`
-	Role     string           `json:"role"`
-	Employee *EmployeeSummary `json:"employee,omitempty"`
+	ID       uint                   `json:"id"`
+	Username string                 `json:"username"`
+	Role     string                 `json:"role"`
+	Employee *EmployeeDetailSummary `json:"employee,omitempty"`
 }
 
-type EmployeeSummary struct {
+type EmployeeDetailSummary struct {
 	ID         uint   `json:"id"`
 	Name       string `json:"name"`
 	Email      string `json:"email"`

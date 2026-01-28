@@ -73,11 +73,12 @@ make backend-dev
 make frontend-dev
 ```
 
-Then open http://localhost:3000 in your browser.
+Then open http://localhost:8099 in your browser.
 
 **Note:** 
-- Backend runs on port 8056, frontend on port 3000
+- Backend runs on port 8056, frontend on port 8099
 - All start commands automatically clean ports before starting to prevent conflicts
+- **Local Network Access**: Both frontend and backend are configured to accept connections from the local network. You can access them using your machine's local IP address (e.g., `http://192.168.x.x:8099` for frontend). Check your IP with `ifconfig` (Mac/Linux) or `ipconfig` (Windows).
 
 ## Makefile Commands
 

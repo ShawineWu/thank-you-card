@@ -1,9 +1,10 @@
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { CardFilters } from '@/types/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { getCompanyValues } from '@/services/companyValues'
+import { companyValuesApi } from '@/services/companyValues'
 import { X, Search } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
@@ -14,7 +15,13 @@ interface FeedFiltersProps {
 
 const FeedFilters = ({ filters, onFiltersChange }: FeedFiltersProps) => {
   const [searchQuery, setSearchQuery] = useState(filters.q || '')
-  const companyValues = getCompanyValues()
+  
+  const { data: companyValuesData } = useQuery({
+    queryKey: ['company-values', 'all'],
+    queryFn: () => companyValuesApi.getAll(),
+  })
+  
+  const companyValues = companyValuesData?.items || []
 
   const handleSearch = (value: string) => {
     setSearchQuery(value)
@@ -56,10 +63,13 @@ const FeedFilters = ({ filters, onFiltersChange }: FeedFiltersProps) => {
           <div className="flex flex-wrap gap-2">
             {companyValues.map((value) => {
               const isSelected = filters.values?.includes(value.id)
+              const variant = isSelected 
+                ? (value.type === 'VALUE' ? 'default' : 'success')
+                : 'outline'
               return (
                 <Badge
                   key={value.id}
-                  variant={isSelected ? 'default' : 'outline'}
+                  variant={variant}
                   className="cursor-pointer"
                   onClick={() => toggleValue(value.id)}
                 >

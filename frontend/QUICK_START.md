@@ -3,7 +3,7 @@
 ## 当前状态
 
 - ✅ 后端运行在: http://localhost:8056
-- ✅ 前端运行在: http://localhost:3000
+- ✅ 前端运行在: http://localhost:8099
 - ✅ API 代理已配置
 
 ## 如果页面空白，请检查：

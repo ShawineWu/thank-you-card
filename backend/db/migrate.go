@@ -146,3 +146,65 @@ func seedMockEmployees(gormDB *gorm.DB) error {
 
 	return nil
 }
+
+func seedUsers(gormDB *gorm.DB) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Get employees for linking
+	var employee1, hrAdmin models.Employee
+	gormDB.WithContext(ctx).Where("email = ?", "employee@example.com").First(&employee1)
+	gormDB.WithContext(ctx).Where("email = ?", "hradmin@example.com").First(&hrAdmin)
+
+	// Hash passwords (default password: "password123")
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
+	hashedPasswordHR, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
+	hashedPasswordAdmin, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
+
+	users := []models.User{
+		{
+			Username:   "employee",
+			Password:   string(hashedPassword),
+			Role:       "EMPLOYEE",
+			EmployeeID: &employee1.ID,
+		},
+		{
+			Username:   "hr",
+			Password:   string(hashedPasswordHR),
+			Role:       "HR",
+			EmployeeID: &hrAdmin.ID,
+		},
+		{
+			Username:   "admin",
+			Password:   string(hashedPasswordAdmin),
+			Role:       "ADMIN",
+			EmployeeID: &hrAdmin.ID, // Admin also needs an employee for reactions
+		},
+	}
+
+	for _, u := range users {
+		var existing models.User
+		if err := gormDB.WithContext(ctx).
+			Where("username = ?", u.Username).
+			First(&existing).Error; err != nil {
+			if err != gorm.ErrRecordNotFound {
+				return err
+			}
+		}
+		if existing.ID != 0 {
+			// Update existing user if EmployeeID is missing (e.g., admin user)
+			if existing.EmployeeID == nil && u.EmployeeID != nil {
+				existing.EmployeeID = u.EmployeeID
+				if err := gormDB.WithContext(ctx).Save(&existing).Error; err != nil {
+					return err
+				}
+			}
+			continue
+		}
+		if err := gormDB.WithContext(ctx).Create(&u).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

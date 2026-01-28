@@ -43,7 +43,7 @@ const CompanyValuesPage = () => {
               {value.code}
             </CardDescription>
           </div>
-          <Badge variant={value.type === 'VALUE' ? 'default' : 'secondary'} className="ml-2">
+          <Badge variant={value.type === 'VALUE' ? 'default' : 'success'} className="ml-2">
             {value.type}
           </Badge>
         </div>

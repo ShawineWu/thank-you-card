@@ -20,7 +20,7 @@ func NewStatsHandler(statsService services.StatsService) *StatsHandler {
 func (h *StatsHandler) GetPersonalStats(c *gin.Context) {
 	emp := getCurrentEmployee(c)
 	if emp == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "employee not found: user must be linked to an employee"})
 		return
 	}
 

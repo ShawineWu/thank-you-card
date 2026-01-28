@@ -25,7 +25,7 @@ stop-backend: ## Stop backend server
 
 stop-frontend: ## Stop frontend server
 	@echo "Stopping frontend server..."
-	@lsof -ti:3000 2>/dev/null | xargs kill -9 2>/dev/null || echo "Frontend not running"
+	@lsof -ti:8099 2>/dev/null | xargs kill -9 2>/dev/null || echo "Frontend not running"
 
 # Backend targets
 backend-dev: stop-backend ## Start backend development server
@@ -98,7 +98,7 @@ setup: db-init frontend-install ## Complete setup for new developers
 	@echo "Next steps:"
 	@echo "1. Start backend: make backend-dev"
 	@echo "2. Start frontend (in another terminal): make frontend-dev"
-	@echo "3. Open http://localhost:3000 in your browser"
+	@echo "3. Open http://localhost:8099 in your browser"
 
 # Clean
 clean: ## Clean build artifacts

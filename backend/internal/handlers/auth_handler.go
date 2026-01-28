@@ -33,9 +33,9 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	var employeeSummary *dto.EmployeeSummary
+	var employeeSummary *dto.EmployeeDetailSummary
 	if result.Employee != nil {
-		employeeSummary = &dto.EmployeeSummary{
+		employeeSummary = &dto.EmployeeDetailSummary{
 			ID:         result.Employee.ID,
 			Name:       result.Employee.Name,
 			Email:      result.Employee.Email,

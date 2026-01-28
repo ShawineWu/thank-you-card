@@ -57,8 +57,11 @@ func AuthMiddleware(authService services.AuthService, userRepo repositories.User
 			if exists {
 				if db, ok := dbVal.(*gorm.DB); ok {
 					var emp models.Employee
-					if err := db.First(&emp, *user.EmployeeID).Error; err == nil {
+					if err := db.WithContext(c.Request.Context()).First(&emp, *user.EmployeeID).Error; err == nil {
 						c.Set(ContextCurrentEmployee, &emp)
+					} else {
+						// Log error but don't fail the request - some users might not have employees
+						// This is acceptable for admin users or special cases
 					}
 				}
 			}

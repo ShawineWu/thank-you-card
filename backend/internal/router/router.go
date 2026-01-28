@@ -1,6 +1,8 @@
 package router
 
 import (
+	"os"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -17,10 +19,20 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 
 	// CORS middleware
 	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"http://localhost:3000", "http://localhost:5173"}
+	env := os.Getenv("ENV")
+	if env == "production" {
+		// Production: only allow specific origins
+		config.AllowOrigins = []string{"http://localhost:8099", "http://localhost:5173"}
+		config.AllowCredentials = true
+	} else {
+		// Development: allow all origins (including local network IPs)
+		// This allows access from other devices on the same network
+		config.AllowAllOrigins = true
+		// Note: AllowAllOrigins and AllowCredentials cannot be used together
+		// For development, this is acceptable
+	}
 	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"}
 	config.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"}
-	config.AllowCredentials = true
 	r.Use(cors.New(config))
 
 	// Store db in context for middleware
