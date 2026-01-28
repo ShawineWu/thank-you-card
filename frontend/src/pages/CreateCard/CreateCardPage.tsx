@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
 import { cardsApi } from '@/services/cards'
+import { aiApi } from '@/services/ai'
+import { companyValuesApi } from '@/services/companyValues'
 import { CreateCardRequest, EmployeeSummary } from '@/types/card'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -15,7 +17,7 @@ import {
 import RecipientSelector from '@/components/Forms/RecipientSelector'
 import ValueSelector from '@/components/Forms/ValueSelector'
 import TeamsCardPreview from '@/components/Card/TeamsCardPreview'
-import { Loader2, Send, Eye } from 'lucide-react'
+import { Loader2, Send, Eye, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -29,8 +31,27 @@ const CreateCardPage = () => {
   const [recipients, setRecipients] = useState<EmployeeSummary[]>([])
   const [valueIds, setValueIds] = useState<number[]>([])
   const [reason, setReason] = useState('')
+  const [userInput, setUserInput] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [previewOpen, setPreviewOpen] = useState(false)
+
+  // Fetch company values to get names
+  const { data: allValuesData } = useQuery({
+    queryKey: ['company-values', 'all'],
+    queryFn: () => companyValuesApi.getAll(),
+  })
+
+  const generateTextMutation = useMutation({
+    mutationFn: (data: { recipientName: string; userInput: string; valueNames: string[] }) =>
+      aiApi.generateText(data),
+    onSuccess: (response) => {
+      setReason(response.text)
+      setErrors((prev) => ({ ...prev, reason: '' }))
+    },
+    onError: (error: any) => {
+      setErrors({ generate: error.response?.data?.error || 'Failed to generate text' })
+    },
+  })
 
   const createCardMutation = useMutation({
     mutationFn: (data: CreateCardRequest) => cardsApi.createCard(data),
@@ -120,6 +141,69 @@ const CreateCardPage = () => {
               error={errors.values}
             />
 
+            {/* User Input for AI Generation */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Key Information (for AI generation)
+              </label>
+              <textarea
+                value={userInput}
+                onChange={(e) => setUserInput(e.target.value)}
+                placeholder="Enter key information about what you want to thank them for (e.g., 'helped me debug a critical issue', 'organized a great team event')..."
+                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  // Clear previous errors
+                  setErrors((prev) => ({ ...prev, generate: '' }))
+
+                  // Check if recipient is selected
+                  if (recipients.length === 0) {
+                    setErrors({ generate: 'Please select at least one recipient first' })
+                    return
+                  }
+
+                  // Check if user input is provided
+                  if (!userInput.trim()) {
+                    setErrors({ generate: 'Please enter some key information first' })
+                    return
+                  }
+
+                  // Get selected values
+                  const allValues = allValuesData?.items || []
+                  const selectedValues = allValues.filter(v => valueIds.includes(v.id))
+                  const valueNames = selectedValues.map(v => v.name)
+
+                  // Generate text
+                  generateTextMutation.mutate({
+                    recipientName: recipients.map(r => r.name).join(' and '),
+                    userInput: userInput.trim(),
+                    valueNames,
+                  })
+                }}
+                disabled={generateTextMutation.isPending}
+                className="w-full sm:w-auto"
+              >
+                {generateTextMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Generate with AI
+                  </>
+                )}
+              </Button>
+              {errors.generate && (
+                <p className="text-sm text-destructive">{errors.generate}</p>
+              )}
+            </div>
+
             {/* Reason */}
             <div className="space-y-2">
               <label className="text-sm font-medium">
@@ -128,7 +212,7 @@ const CreateCardPage = () => {
               <textarea
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="Describe why you're recognizing this person..."
+                placeholder="Describe why you're recognizing this person... (or use AI generation above)"
                 className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 maxLength={MAX_REASON_LENGTH}
               />

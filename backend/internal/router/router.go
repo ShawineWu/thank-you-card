@@ -51,6 +51,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 
 	// Services
 	teamsNotificationService := services.NewTeamsNotificationService()
+	deepseekService := services.NewDeepSeekService()
 	cardService := services.NewCardService(cardRepo, emojiRepo, teamsNotificationService)
 	statsService := services.NewStatsService(cardRepo)
 	analyticsService := services.NewAnalyticsService(analyticsRepo, cardRepo, employeeRepo)
@@ -64,6 +65,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	teamsHandler := handlers.NewTeamsHandler(cardService)
 	companyValueHandler := handlers.NewCompanyValueHandler(companyValueService)
 	authHandler := handlers.NewAuthHandler(authService)
+	aiHandler := handlers.NewAIHandler(deepseekService)
 
 	api := r.Group("/api")
 	{
@@ -74,6 +76,9 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 		protected := api.Group("")
 		protected.Use(middleware.AuthMiddleware(authService, userRepo))
 		{
+			// AI Text Generation
+			protected.POST("/ai/generate-text", aiHandler.GenerateRecognitionText)
+
 			// Company Values
 			protected.GET("/company-values", companyValueHandler.GetByType)
 			protected.GET("/company-values/:id", companyValueHandler.GetByID)
