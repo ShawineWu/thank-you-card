@@ -71,6 +71,11 @@ frontend/node_modules/
 frontend/dist/
 frontend/.vite/
 
+# Root level node_modules (if any)
+node_modules/
+package-lock.json
+package.json
+
 # Backend binaries and build artifacts
 backend/bin/
 backend/server
