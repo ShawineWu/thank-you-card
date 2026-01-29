@@ -29,6 +29,7 @@ export interface ValueResponse {
   name: string;
   description: string;
   type: string;
+  examples?: string[];
 }
 
 export interface Employee {

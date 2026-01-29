@@ -8,6 +8,7 @@ import { SentCards } from "./pages/SentCards";
 import { Stats } from "./pages/Stats";
 import { Settings } from "./pages/Settings";
 import { HRAnalytics } from "./pages/HRAnalytics";
+import { CompanyValues } from "./pages/CompanyValues";
 import "./App.css";
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
           <Route path="received" element={<ReceivedCards />} />
           <Route path="sent" element={<SentCards />} />
           <Route path="stats" element={<Stats />} />
+          <Route path="values" element={<CompanyValues />} />
           <Route path="analytics" element={<HRAnalytics />} />
           <Route path="settings" element={<Settings />} />
         </Route>
