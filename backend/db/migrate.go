@@ -23,6 +23,8 @@ func AutoMigrateAndSeed(gormDB *gorm.DB) error {
 		&models.CardRecipient{},
 		&models.CardValue{},
 		&models.EmojiReaction{},
+		&models.Milestone{},
+		&models.UserMilestone{},
 	); err != nil {
 		return fmt.Errorf("auto migrate: %w", err)
 	}
@@ -37,6 +39,10 @@ func AutoMigrateAndSeed(gormDB *gorm.DB) error {
 
 	if err := seedUsers(gormDB); err != nil {
 		return fmt.Errorf("seed users: %w", err)
+	}
+
+	if err := seedMilestones(gormDB); err != nil {
+		return fmt.Errorf("seed milestones: %w", err)
 	}
 
 	return nil
@@ -269,6 +275,73 @@ func seedUsers(gormDB *gorm.DB) error {
 			continue
 		}
 		if err := gormDB.WithContext(ctx).Create(&u).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func seedMilestones(gormDB *gorm.DB) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	type seedMilestone struct {
+		Code        string
+		Name        string
+		Description string
+		Type        string
+		Threshold   int
+	}
+
+	seeds := []seedMilestone{
+		// SENT milestones
+		{"SENT_5", "Sent 5 Cards", "Congratulations! You've sent 5 thank you cards. Keep spreading appreciation!", "SENT", 5},
+		{"SENT_10", "Sent 10 Cards", "Amazing! You've sent 10 thank you cards. Your recognition makes a difference!", "SENT", 10},
+		{"SENT_50", "Sent 50 Cards", "Outstanding! You've sent 50 thank you cards. You're a recognition champion!", "SENT", 50},
+		{"SENT_100", "Sent 100 Cards", "Incredible! You've sent 100 thank you cards. You're a true appreciation leader!", "SENT", 100},
+		// RECEIVED milestones
+		{"RECEIVED_5", "Received 5 Cards", "Well done! You've received 5 thank you cards. Your impact is being recognized!", "RECEIVED", 5},
+		{"RECEIVED_10", "Received 10 Cards", "Excellent! You've received 10 thank you cards. Your contributions are valued!", "RECEIVED", 10},
+		{"RECEIVED_50", "Received 50 Cards", "Remarkable! You've received 50 thank you cards. You're making a real difference!", "RECEIVED", 50},
+		{"RECEIVED_100", "Received 100 Cards", "Extraordinary! You've received 100 thank you cards. You're an inspiration!", "RECEIVED", 100},
+		// TOTAL milestones
+		{"TOTAL_5", "5 Cards Total", "Great start! You've sent or received 5 thank you cards combined.", "TOTAL", 5},
+		{"TOTAL_10", "10 Cards Total", "Nice progress! You've sent or received 10 thank you cards combined.", "TOTAL", 10},
+		{"TOTAL_50", "50 Cards Total", "Impressive! You've sent or received 50 thank you cards combined.", "TOTAL", 50},
+		{"TOTAL_100", "100 Cards Total", "Phenomenal! You've sent or received 100 thank you cards combined.", "TOTAL", 100},
+	}
+
+	for _, sm := range seeds {
+		var existing models.Milestone
+		if err := gormDB.WithContext(ctx).
+			Where("code = ?", sm.Code).
+			First(&existing).Error; err != nil {
+			if err != gorm.ErrRecordNotFound {
+				return err
+			}
+		}
+
+		if existing.ID != 0 {
+			// Update existing milestone if needed
+			existing.Name = sm.Name
+			existing.Description = sm.Description
+			existing.Type = sm.Type
+			existing.Threshold = sm.Threshold
+			if err := gormDB.WithContext(ctx).Save(&existing).Error; err != nil {
+				return err
+			}
+			continue
+		}
+
+		milestone := models.Milestone{
+			Code:        sm.Code,
+			Name:        sm.Name,
+			Description: sm.Description,
+			Type:        sm.Type,
+			Threshold:   sm.Threshold,
+		}
+		if err := gormDB.WithContext(ctx).Create(&milestone).Error; err != nil {
 			return err
 		}
 	}

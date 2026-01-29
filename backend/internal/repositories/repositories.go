@@ -53,6 +53,14 @@ type CompanyValueRepository interface {
 	GetByType(ctx context.Context, valueType string) ([]models.CompanyValue, error)
 }
 
+type MilestoneRepository interface {
+	GetAll(ctx context.Context) ([]models.Milestone, error)
+	GetByID(ctx context.Context, id uint) (*models.Milestone, error)
+	GetUserMilestones(ctx context.Context, userID uint) ([]models.UserMilestone, error)
+	CreateUserMilestone(ctx context.Context, userMilestone *models.UserMilestone) error
+	GetUserMilestoneByMilestoneID(ctx context.Context, userID uint, milestoneID uint) (*models.UserMilestone, error)
+}
+
 type TopEmployee struct {
 	EmployeeID uint
 	Name       string
@@ -495,4 +503,59 @@ func (r *companyValueRepository) GetByType(ctx context.Context, valueType string
 		return nil, err
 	}
 	return values, nil
+}
+
+// MilestoneRepository implementation
+type milestoneRepository struct {
+	db *gorm.DB
+}
+
+func NewMilestoneRepository(db *gorm.DB) MilestoneRepository {
+	return &milestoneRepository{db: db}
+}
+
+func (r *milestoneRepository) GetAll(ctx context.Context) ([]models.Milestone, error) {
+	var milestones []models.Milestone
+	if err := r.db.WithContext(ctx).
+		Order("type ASC, threshold ASC").
+		Find(&milestones).Error; err != nil {
+		return nil, err
+	}
+	return milestones, nil
+}
+
+func (r *milestoneRepository) GetByID(ctx context.Context, id uint) (*models.Milestone, error) {
+	var milestone models.Milestone
+	if err := r.db.WithContext(ctx).
+		Where("id = ?", id).
+		First(&milestone).Error; err != nil {
+		return nil, err
+	}
+	return &milestone, nil
+}
+
+func (r *milestoneRepository) GetUserMilestones(ctx context.Context, userID uint) ([]models.UserMilestone, error) {
+	var userMilestones []models.UserMilestone
+	if err := r.db.WithContext(ctx).
+		Preload("Milestone").
+		Where("user_id = ?", userID).
+		Order("achieved_at DESC").
+		Find(&userMilestones).Error; err != nil {
+		return nil, err
+	}
+	return userMilestones, nil
+}
+
+func (r *milestoneRepository) CreateUserMilestone(ctx context.Context, userMilestone *models.UserMilestone) error {
+	return r.db.WithContext(ctx).Create(userMilestone).Error
+}
+
+func (r *milestoneRepository) GetUserMilestoneByMilestoneID(ctx context.Context, userID uint, milestoneID uint) (*models.UserMilestone, error) {
+	var userMilestone models.UserMilestone
+	if err := r.db.WithContext(ctx).
+		Where("user_id = ? AND milestone_id = ?", userID, milestoneID).
+		First(&userMilestone).Error; err != nil {
+		return nil, err
+	}
+	return &userMilestone, nil
 }

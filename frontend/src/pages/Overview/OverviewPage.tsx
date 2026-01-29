@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { statsApi } from '@/services/stats'
+import { milestonesApi } from '@/services/milestones'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, Send, Inbox, TrendingUp, Trophy, Calendar } from 'lucide-react'
+import { Loader2, Send, Inbox, TrendingUp, Trophy, Calendar, Award, User } from 'lucide-react'
 import { format, subDays } from 'date-fns'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -13,6 +14,9 @@ import { companyValuesApi } from '@/services/companyValues'
 import Podium from '@/components/Overview/Podium'
 import EmployeeCardsDialog from '@/components/TopEmployees/EmployeeCardsDialog'
 import ValueDetailDialog from '@/components/CompanyValues/ValueDetailDialog'
+import MilestoneBadge from '@/components/Overview/MilestoneBadge'
+import MilestoneDetailDialog from '@/components/Overview/MilestoneDetailDialog'
+import { Milestone, UserAchievement } from '@/types/milestone'
 
 const OverviewPage = () => {
   const [from, setFrom] = useState<string>(
@@ -26,6 +30,8 @@ const OverviewPage = () => {
   const [cardsDialogOpen, setCardsDialogOpen] = useState(false)
   const [selectedValue, setSelectedValue] = useState<CompanyValueDetail | null>(null)
   const [valueDialogOpen, setValueDialogOpen] = useState(false)
+  const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null)
+  const [milestoneDialogOpen, setMilestoneDialogOpen] = useState(false)
 
   // Fetch Top 10 employees
   const { data: topEmployeesData, isLoading: isLoadingTop, error: topError } = useQuery({
@@ -46,6 +52,59 @@ const OverviewPage = () => {
     queryFn: () => statsApi.getPersonalStats(),
   })
 
+  // Fetch all milestones
+  const { data: allMilestones, isLoading: isLoadingMilestones } = useQuery({
+    queryKey: ['milestones', 'all'],
+    queryFn: () => milestonesApi.getAllMilestones(),
+  })
+
+  // Fetch user achievements
+  const { data: userAchievements, isLoading: isLoadingAchievements } = useQuery({
+    queryKey: ['milestones', 'me'],
+    queryFn: () => milestonesApi.getMyAchievements(),
+  })
+
+  // Combine milestones with achievements and progress
+  const milestonesWithStatus = useMemo(() => {
+    if (!allMilestones || !personalStats) return []
+
+    const achievementMap = new Map<number, UserAchievement>()
+    if (userAchievements) {
+      userAchievements.forEach((achievement) => {
+        achievementMap.set(achievement.milestone.id, achievement)
+      })
+    }
+
+    return allMilestones.map((milestone) => {
+      const achievement = achievementMap.get(milestone.id)
+      let currentProgress: number | undefined
+
+      if (achievement) {
+        currentProgress = milestone.threshold // Already achieved
+      } else {
+        // Calculate current progress
+        switch (milestone.type) {
+          case 'SENT':
+            currentProgress = personalStats.totalSent
+            break
+          case 'RECEIVED':
+            currentProgress = personalStats.totalReceived
+            break
+          case 'TOTAL':
+            currentProgress = personalStats.totalSent + personalStats.totalReceived
+            break
+        }
+      }
+
+      return {
+        milestone,
+        achieved: !!achievement,
+        achievedAt: achievement?.achievedAt,
+        currentProgress: Math.max(0, currentProgress || 0),
+      }
+    })
+  }, [allMilestones, userAchievements, personalStats])
+
   const handleCardsClick = (employeeId: number, employeeName: string) => {
     setSelectedEmployee({ id: employeeId, name: employeeName })
     setCardsDialogOpen(true)
@@ -61,7 +120,12 @@ const OverviewPage = () => {
     }
   }
 
-  const isLoading = isLoadingTop || isLoadingStats
+  const handleMilestoneClick = (milestone: Milestone) => {
+    setSelectedMilestone(milestone)
+    setMilestoneDialogOpen(true)
+  }
+
+  const isLoading = isLoadingTop || isLoadingStats || isLoadingMilestones || isLoadingAchievements
   const error = topError || statsError
 
   if (isLoading) {
@@ -190,6 +254,23 @@ const OverviewPage = () => {
         </CardContent>
       </Card>
 
+      {/* Divider Section - Separating Company Data from Personal Data */}
+      <div className="relative my-10">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t-2 border-dashed border-border/60"></div>
+        </div>
+        <div className="relative flex justify-center">
+          <div className="bg-background px-6 py-2">
+            <div className="flex items-center space-x-2 text-base font-semibold text-foreground">
+              <div className="p-1.5 rounded-full bg-primary/10">
+                <User className="h-4 w-4 text-primary" />
+              </div>
+              <span>Personal Dashboard</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Most Received Values Section */}
       {personalStats && personalStats.topReceivedValues.length > 0 && (
         <Card className="mb-6">
@@ -224,7 +305,7 @@ const OverviewPage = () => {
 
       {/* Personal Statistics Cards */}
       {personalStats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Cards Sent</CardTitle>
@@ -253,6 +334,38 @@ const OverviewPage = () => {
         </div>
       )}
 
+      {/* Milestones Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Award className="h-5 w-5 text-yellow-500" />
+            <span>My Achievements</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {milestonesWithStatus.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-8">
+              {milestonesWithStatus.map(({ milestone, achieved, achievedAt, currentProgress }) => (
+                <MilestoneBadge
+                  key={milestone.id}
+                  milestone={milestone}
+                  achieved={achieved}
+                  achievedAt={achievedAt}
+                  currentProgress={currentProgress}
+                  onClick={() => handleMilestoneClick(milestone)}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-muted-foreground py-8">
+              {isLoadingMilestones || isLoadingAchievements
+                ? 'Loading achievements...'
+                : 'No milestones available'}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Employee Cards Dialog */}
       {selectedEmployee && (
         <EmployeeCardsDialog
@@ -273,6 +386,18 @@ const OverviewPage = () => {
         open={valueDialogOpen}
         onOpenChange={setValueDialogOpen}
       />
+
+      {/* Milestone Detail Dialog */}
+      {selectedMilestone && (
+        <MilestoneDetailDialog
+          milestone={selectedMilestone}
+          achieved={milestonesWithStatus.find((m) => m.milestone.id === selectedMilestone.id)?.achieved || false}
+          achievedAt={milestonesWithStatus.find((m) => m.milestone.id === selectedMilestone.id)?.achievedAt}
+          currentProgress={milestonesWithStatus.find((m) => m.milestone.id === selectedMilestone.id)?.currentProgress}
+          open={milestoneDialogOpen}
+          onOpenChange={setMilestoneDialogOpen}
+        />
+      )}
     </div>
   )
 }

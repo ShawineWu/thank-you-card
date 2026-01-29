@@ -48,6 +48,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	employeeRepo := repositories.NewEmployeeRepository(db)
 	companyValueRepo := repositories.NewCompanyValueRepository(db)
 	userRepo := repositories.NewUserRepository(db)
+	milestoneRepo := repositories.NewMilestoneRepository(db)
 
 	// Services
 	teamsNotificationService := services.NewTeamsNotificationService()
@@ -57,6 +58,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	analyticsService := services.NewAnalyticsService(analyticsRepo, cardRepo, employeeRepo)
 	companyValueService := services.NewCompanyValueService(companyValueRepo)
 	authService := services.NewAuthService(userRepo, employeeRepo)
+	milestoneService := services.NewMilestoneService(milestoneRepo, cardRepo, userRepo)
 
 	// Handlers
 	cardHandler := handlers.NewCardHandler(cardService)
@@ -67,6 +69,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	employeeHandler := handlers.NewEmployeeHandler(employeeRepo)
 	authHandler := handlers.NewAuthHandler(authService)
 	aiHandler := handlers.NewAIHandler(deepseekService)
+	milestoneHandler := handlers.NewMilestoneHandler(milestoneService)
 
 	api := r.Group("/api")
 	{
@@ -98,6 +101,10 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 			protected.GET("/cards/me/stats", statsHandler.GetPersonalStats)
 			// Top recipients is available to all employees (not just HR)
 			protected.GET("/cards/top-recipients", analyticsHandler.GetTopRecognizedEmployees)
+
+			// Milestones
+			protected.GET("/milestones", milestoneHandler.GetAllMilestones)
+			protected.GET("/milestones/me", milestoneHandler.GetMyAchievements)
 
 			// Emoji reactions
 			protected.POST("/cards/:id/reactions", cardHandler.React)

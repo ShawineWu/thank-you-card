@@ -96,3 +96,30 @@ type EmojiReaction struct {
 	UpdatedAt time.Time      `gorm:"not null"`
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
+
+// Milestone represents a milestone achievement definition.
+type Milestone struct {
+	ID          uint           `gorm:"primaryKey"`
+	Code        string         `gorm:"size:64;uniqueIndex;not null"`
+	Name        string         `gorm:"size:255;not null"`
+	Description string         `gorm:"type:text;not null"`
+	Type        string         `gorm:"size:32;not null"` // SENT, RECEIVED, TOTAL
+	Threshold   int            `gorm:"not null"`
+	IconURL     *string        `gorm:"size:512"` // Optional icon URL
+	CreatedAt   time.Time      `gorm:"not null"`
+	UpdatedAt   time.Time      `gorm:"not null"`
+	DeletedAt   gorm.DeletedAt `gorm:"index"`
+}
+
+// UserMilestone tracks user achievements.
+type UserMilestone struct {
+	ID          uint           `gorm:"primaryKey"`
+	UserID      uint           `gorm:"index;not null;uniqueIndex:idx_user_milestone"`
+	User        User           `gorm:"foreignKey:UserID"`
+	MilestoneID uint           `gorm:"index;not null;uniqueIndex:idx_user_milestone"`
+	Milestone   Milestone      `gorm:"foreignKey:MilestoneID"`
+	AchievedAt  time.Time      `gorm:"not null"`
+	CreatedAt   time.Time      `gorm:"not null"`
+	UpdatedAt   time.Time      `gorm:"not null"`
+	DeletedAt   gorm.DeletedAt `gorm:"index"`
+}
