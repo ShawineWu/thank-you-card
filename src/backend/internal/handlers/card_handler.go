@@ -143,30 +143,29 @@ func (h *CardHandler) GenerateRecognitionReason(c *gin.Context) {
 	recipientList := strings.Join(req.RecipientNames, ", ")
 	valueList := strings.Join(req.ValueNames, ", ")
 
-	systemPrompt := `你的角色：你是一位资深的人力资源专家，正在推行 thank you card 项目让员工之间表达日常工作支持的感激，你懂得如何将公司文化价值观与员工事例做紧密贴合。`
-	userPrompt := fmt.Sprintf(`你的任务：根据以下信息，生成一段用于感谢同事的 thank you card 内容。
+	prompt := fmt.Sprintf(`你的角色：你是一位资深的人力资源专家，正在推行 thank you card 项目让员工之间表达日常工作支持的感激，你懂得如何将公司文化价值观与员工事例做紧密贴合。
 
-发件人：%s
+你的任务：根据以下信息，生成一段用于感谢同事的 thank you card 内容。
+
 接收人：%s
 用户输入的关键信息：%s
 用户输入的价值观及信条：%s
 
 生成结果的要求：
 - 语言要温暖、真诚、充满感激之情
-- 要体现对接收人的认可和赞美（内容必须是发件人感谢接收人，不要搞错发件人和接收人）
+- 要体现对接收人的认可和赞美
 - 将用户已经选择的价值观及信条自然地融入文本中
-- 长度控制在300-500字之间
+- 长度控制在500字符以内
 - 使用中文或英文（根据用户输入的语言选择）
 - 语气要自然、亲切，不要太正式
-- 使用 STAR 原则
+- 使用 STAR 原则分段，但是不要有加粗标题
 
-请直接输出感谢文本，不要包含其他说明文字。`, req.SenderName, recipientList, req.KeyInfo, valueList)
+请直接输出感谢文本，不要包含其他说明文字。`, recipientList, req.KeyInfo, valueList)
 
 	body := deepSeekChatRequest{
 		Model: "deepseek-chat",
 		Messages: []deepSeekChatMessage{
-			{Role: "system", Content: systemPrompt},
-			{Role: "user", Content: userPrompt},
+			{Role: "user", Content: prompt},
 		},
 		MaxTokens: 800,
 	}

@@ -1,10 +1,10 @@
 export interface CompanyValue {
   id: string;
-  code: string;
+  code?: string;
   name: string;
   description: string;
   type: string;
-  examples: string[];
+  examples?: string[];
 }
 
 export interface Employee {

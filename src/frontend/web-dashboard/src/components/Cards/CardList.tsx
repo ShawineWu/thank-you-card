@@ -61,12 +61,12 @@ export const CardList: React.FC<CardListProps> = ({
 
   if (!data || data.data.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 bg-slate-900/30 rounded-3xl border border-dashed border-slate-800">
-        <div className="p-4 rounded-full bg-slate-900 text-slate-500 mb-4">
+      <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-gray-100 shadow-sm">
+        <div className="p-4 rounded-full bg-gray-50 text-gray-400 mb-4">
           <ExternalLink size={32} />
         </div>
-        <h3 className="text-xl font-semibold text-slate-300">No cards found</h3>
-        <p className="text-slate-500 mt-2">
+        <h3 className="text-lg font-semibold text-gray-700">No cards found</h3>
+        <p className="text-gray-400 mt-2 text-sm">
           When recognitions are shared, they'll appear here.
         </p>
       </div>
@@ -77,17 +77,17 @@ export const CardList: React.FC<CardListProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-800 bg-slate-950/50 overflow-hidden">
+      <div className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
         <Table>
-          <TableHeader className="bg-slate-900/50">
-            <TableRow className="border-slate-800 hover:bg-transparent">
+          <TableHeader className="bg-gray-50/80">
+            <TableRow className="border-gray-100 hover:bg-transparent">
               {showSender && (
-                <TableHead className="w-[150px]">Sender</TableHead>
+                <TableHead className="w-[150px] text-gray-500 font-medium">Sender</TableHead>
               )}
-              {showRecipient && <TableHead>Recipients</TableHead>}
-              <TableHead className="max-w-[300px]">Reason</TableHead>
-              <TableHead>Values</TableHead>
-              <TableHead className="text-right">Date</TableHead>
+              {showRecipient && <TableHead className="text-gray-500 font-medium">Recipients</TableHead>}
+              <TableHead className="max-w-[300px] text-gray-500 font-medium">Reason</TableHead>
+              <TableHead className="text-gray-500 font-medium">Values</TableHead>
+              <TableHead className="text-right text-gray-500 font-medium">Date</TableHead>
               <TableHead className="w-[100px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -95,17 +95,17 @@ export const CardList: React.FC<CardListProps> = ({
             {data.data.map((card) => (
               <TableRow
                 key={card.id}
-                className="border-slate-800 hover:bg-slate-900/30 transition-colors"
+                className="border-gray-100 hover:bg-gray-50/50 transition-colors"
               >
                 {showSender && (
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Avatar className="h-7 w-7 border border-slate-800">
-                        <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                      <Avatar className="h-7 w-7 border border-gray-200">
+                        <AvatarFallback className="text-[10px] bg-indigo-50 text-indigo-600">
                           {getInitials(card.senderId)}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="text-sm font-medium">
+                      <span className="text-sm font-medium text-gray-700">
                         {card.senderId}
                       </span>
                     </div>
@@ -118,7 +118,7 @@ export const CardList: React.FC<CardListProps> = ({
                         <Badge
                           key={r.id}
                           variant="outline"
-                          className="text-[10px] py-0 px-2 border-slate-700 bg-slate-900"
+                          className="text-[10px] py-0 px-2 border-gray-200 bg-gray-50 text-gray-600"
                         >
                           {r.name}
                         </Badge>
@@ -126,7 +126,7 @@ export const CardList: React.FC<CardListProps> = ({
                       {card.recipients.length > 2 && (
                         <Badge
                           variant="outline"
-                          className="text-[10px] py-0 px-2 border-slate-700"
+                          className="text-[10px] py-0 px-2 border-gray-200 text-gray-500"
                         >
                           +{card.recipients.length - 2}
                         </Badge>
@@ -135,7 +135,7 @@ export const CardList: React.FC<CardListProps> = ({
                   </TableCell>
                 )}
                 <TableCell className="max-w-[300px]">
-                  <p className="text-sm text-slate-300 truncate">
+                  <p className="text-sm text-gray-600 truncate">
                     {card.recognitionReason}
                   </p>
                 </TableCell>
@@ -144,26 +144,26 @@ export const CardList: React.FC<CardListProps> = ({
                     {card.selectedValues.slice(0, 1).map((v) => (
                       <Badge
                         key={v.id}
-                        className="bg-primary/10 text-primary border-none text-[10px] px-2"
+                        className="bg-indigo-50 text-indigo-600 border-none text-[10px] px-2 font-medium"
                       >
                         {v.name}
                       </Badge>
                     ))}
                     {card.selectedValues.length > 1 && (
-                      <span className="text-[10px] text-slate-500">
+                      <span className="text-[10px] text-gray-400">
                         +{card.selectedValues.length - 1}
                       </span>
                     )}
                   </div>
                 </TableCell>
-                <TableCell className="text-right text-xs text-slate-500">
+                <TableCell className="text-right text-xs text-gray-400">
                   {format(new Date(card.createdAt), "MMM d, yyyy")}
                 </TableCell>
                 <TableCell className="text-right">
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-slate-500 hover:text-primary hover:bg-primary/10"
+                    className="h-8 w-8 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg"
                     onClick={() => handleViewDetails(card)}
                   >
                     <Eye size={16} />
@@ -182,7 +182,7 @@ export const CardList: React.FC<CardListProps> = ({
               variant="ghost"
               disabled={!pagination.hasPrevious}
               onClick={() => onPageChange(pagination.page - 1)}
-              className="gap-1 pl-2.5"
+              className="gap-1 pl-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
             >
               <PaginationPrevious />
             </Button>
@@ -196,8 +196,8 @@ export const CardList: React.FC<CardListProps> = ({
                   onClick={() => onPageChange(p)}
                   className={
                     p === pagination.page
-                      ? "bg-primary text-primary-foreground"
-                      : "text-slate-400 hover:bg-slate-900"
+                      ? "bg-indigo-500 text-white rounded-lg"
+                      : "text-gray-500 hover:bg-gray-100 rounded-lg"
                   }
                 >
                   {p}
@@ -211,7 +211,7 @@ export const CardList: React.FC<CardListProps> = ({
               variant="ghost"
               disabled={!pagination.hasNext}
               onClick={() => onPageChange(pagination.page + 1)}
-              className="gap-1 pr-2.5"
+              className="gap-1 pr-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
             >
               <PaginationNext />
             </Button>

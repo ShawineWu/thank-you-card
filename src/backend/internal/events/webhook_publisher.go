@@ -58,6 +58,30 @@ func (p *TeamsWebhookPublisher) PublishCardCreated(card *models.Card) error {
 
 	recipientText := strings.Join(recipientNames, ", ")
 
+	// Build value badges as a ColumnSet for inline display
+	valueBadges := make([]map[string]interface{}, 0)
+	for _, v := range card.Values {
+		valueBadges = append(valueBadges, map[string]interface{}{
+			"type":  "Column",
+			"width": "auto",
+			"items": []map[string]interface{}{
+				{
+					"type":                "TextBlock",
+					"text":                fmt.Sprintf("🏷️ %s", v.CompanyValue.Name),
+					"size":                "Small",
+					"weight":              "Bolder",
+					"color":               "Accent",
+					"horizontalAlignment": "Center",
+				},
+			},
+			"style":                    "emphasis",
+			"bleed":                    false,
+			"minHeight":                "24px",
+			"verticalContentAlignment": "Center",
+			"spacing":                  "Small",
+		})
+	}
+
 	payload := map[string]interface{}{
 		"type": "message",
 		"attachments": []map[string]interface{}{
@@ -66,9 +90,69 @@ func (p *TeamsWebhookPublisher) PublishCardCreated(card *models.Card) error {
 				"content": map[string]interface{}{
 					"type": "AdaptiveCard",
 					"body": []map[string]interface{}{
+						// Header with celebration banner
 						{
-							"type":  "Container",
-							"style": "emphasis", // Light grey background
+							"type":    "Container",
+							"style":   "accent",
+							"bleed":   true,
+							"spacing": "None",
+							"items": []map[string]interface{}{
+								{
+									"type": "ColumnSet",
+									"columns": []map[string]interface{}{
+										{
+											"type":  "Column",
+											"width": "auto",
+											"items": []map[string]interface{}{
+												{
+													"type": "TextBlock",
+													"text": "🎉",
+													"size": "ExtraLarge",
+												},
+											},
+											"verticalContentAlignment": "Center",
+										},
+										{
+											"type":  "Column",
+											"width": "stretch",
+											"items": []map[string]interface{}{
+												{
+													"type":   "TextBlock",
+													"text":   "Recognition Card",
+													"size":   "Large",
+													"weight": "Bolder",
+													"color":  "Light",
+												},
+												{
+													"type":    "TextBlock",
+													"text":    "Someone did something amazing! ✨",
+													"size":    "Small",
+													"color":   "Light",
+													"spacing": "None",
+												},
+											},
+											"verticalContentAlignment": "Center",
+										},
+										{
+											"type":  "Column",
+											"width": "auto",
+											"items": []map[string]interface{}{
+												{
+													"type": "TextBlock",
+													"text": "🎊",
+													"size": "ExtraLarge",
+												},
+											},
+											"verticalContentAlignment": "Center",
+										},
+									},
+								},
+							},
+						},
+						// Recipient section
+						{
+							"type":    "Container",
+							"spacing": "Medium",
 							"items": []map[string]interface{}{
 								{
 									"type": "ColumnSet",
@@ -79,7 +163,7 @@ func (p *TeamsWebhookPublisher) PublishCardCreated(card *models.Card) error {
 											"items": []map[string]interface{}{
 												{
 													"type":  "Image",
-													"url":   "https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Unicorn/3D/unicorn_3d.png",
+													"url":   "https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Trophy/3D/trophy_3d.png",
 													"size":  "Medium",
 													"style": "Person",
 												},
@@ -92,7 +176,7 @@ func (p *TeamsWebhookPublisher) PublishCardCreated(card *models.Card) error {
 											"items": []map[string]interface{}{
 												{
 													"type":   "TextBlock",
-													"text":   "Congratulations",
+													"text":   "🌟 Congratulations!",
 													"size":   "Large",
 													"weight": "Bolder",
 													"color":  "Accent",
@@ -103,24 +187,89 @@ func (p *TeamsWebhookPublisher) PublishCardCreated(card *models.Card) error {
 													"size":   "Medium",
 													"weight": "Bolder",
 													"wrap":   true,
+													"color":  "Good",
 												},
 											},
 										},
 									},
+								},
+							},
+						},
+						// Recognition reason
+						{
+							"type":    "Container",
+							"style":   "emphasis",
+							"spacing": "Medium",
+							"items": []map[string]interface{}{
+								{
+									"type":    "TextBlock",
+									"text":    "💬 Recognition Message",
+									"size":    "Small",
+									"weight":  "Bolder",
+									"color":   "Accent",
+									"spacing": "Small",
 								},
 								{
 									"type":    "TextBlock",
 									"text":    card.RecognitionReason,
 									"wrap":    true,
 									"size":    "Medium",
-									"spacing": "Medium",
+									"spacing": "Small",
+								},
+							},
+						},
+						// Company values section
+						{
+							"type":    "Container",
+							"spacing": "Medium",
+							"items": []map[string]interface{}{
+								{
+									"type":   "TextBlock",
+									"text":   "🎯 Company Values Demonstrated",
+									"size":   "Small",
+									"weight": "Bolder",
+									"color":  "Accent",
 								},
 								{
-									"type":     "TextBlock",
-									"text":     fmt.Sprintf("From **%s**", card.SenderName),
-									"size":     "Small",
-									"isSubtle": true,
-									"spacing":  "Large",
+									"type":    "ColumnSet",
+									"columns": valueBadges,
+									"spacing": "Small",
+								},
+							},
+						},
+						// Sender info with decorative element
+						{
+							"type":    "Container",
+							"spacing": "Large",
+							"items": []map[string]interface{}{
+								{
+									"type": "ColumnSet",
+									"columns": []map[string]interface{}{
+										{
+											"type":  "Column",
+											"width": "stretch",
+											"items": []map[string]interface{}{
+												{
+													"type":     "TextBlock",
+													"text":     fmt.Sprintf("💝 Sent with appreciation by **%s**", card.SenderName),
+													"size":     "Small",
+													"isSubtle": true,
+													"wrap":     true,
+												},
+											},
+										},
+										{
+											"type":  "Column",
+											"width": "auto",
+											"items": []map[string]interface{}{
+												{
+													"type": "Image",
+													"url":  "https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Sparkling%20heart/3D/sparkling_heart_3d.png",
+													"size": "Small",
+												},
+											},
+										},
+									},
 								},
 							},
 						},
@@ -128,12 +277,13 @@ func (p *TeamsWebhookPublisher) PublishCardCreated(card *models.Card) error {
 					"actions": []map[string]interface{}{
 						{
 							"type":  "Action.OpenUrl",
-							"title": "Review your praise history",
+							"title": "🏆 View Praise History",
 							"url":   "https://teams.microsoft.com/l/entity/com.castlery.thankyou/thankyou-tab?context={\"subEntityId\":\"history\"}",
+							"style": "positive",
 						},
 						{
 							"type":  "Action.OpenUrl",
-							"title": "Send praise",
+							"title": "✨ Send Praise",
 							"url":   "https://teams.microsoft.com/l/entity/com.castlery.thankyou/thankyou-tab?context={\"subEntityId\":\"create\"}",
 						},
 					},
@@ -141,7 +291,7 @@ func (p *TeamsWebhookPublisher) PublishCardCreated(card *models.Card) error {
 						"entities": entities,
 					},
 					"$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-					"version": "1.2",
+					"version": "1.4",
 				},
 			},
 		},

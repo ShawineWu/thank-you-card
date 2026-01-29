@@ -11,14 +11,12 @@ import {
   MessageBarTitle,
   Spinner,
 } from "@fluentui/react-components";
-import { SendRegular } from "@fluentui/react-icons";
+import { SendRegular, SparkleRegular } from "@fluentui/react-icons";
 import * as microsoftTeams from "@microsoft/teams-js";
 import { RecipientSelector } from "./RecipientSelector";
 import { ValueSelector } from "./ValueSelector";
 import { CardPreview } from "./CardPreview";
 import { CharacterCounter } from "./CharacterCounter";
-import { SuccessOverlay } from "./SuccessOverlay";
-import { ConfettiEffect } from "./ConfettiEffect";
 import { ErrorMessage } from "./ErrorMessage";
 import { useAnimation } from "../hooks/useAnimation";
 import { api } from "../services/api";
@@ -39,6 +37,14 @@ const useStyles = makeStyles({
     gap: tokens.spacingVerticalL,
   },
   textareaField: {
+    marginBottom: tokens.spacingVerticalL,
+  },
+  keyInfoField: {
+    marginBottom: tokens.spacingVerticalS,
+  },
+  generateRow: {
+    display: "flex",
+    justifyContent: "flex-end",
     marginBottom: tokens.spacingVerticalL,
   },
   actions: {
@@ -97,9 +103,9 @@ export const CardForm: React.FC = () => {
   const [companyValues, setCompanyValues] = useState<CompanyValue[]>([]);
   const [loadingValues, setLoadingValues] = useState(true);
   const [isInTeamsTask, setIsInTeamsTask] = useState(false);
-  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [keyInfo, setKeyInfo] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
   
   // Animation hooks for validation errors
   const recipientShake = useAnimation("shake");
@@ -116,7 +122,7 @@ export const CardForm: React.FC = () => {
   const isFormValid = 
     formData.recipients.length > 0 &&
     formData.recognitionReason.trim().length >= 10 &&
-    formData.recognitionReason.length <= 500 &&
+    formData.recognitionReason.length <= 1000 &&
     formData.valueIds.length > 0;
 
   // Initialize Teams SDK
@@ -178,8 +184,8 @@ export const CardForm: React.FC = () => {
       newErrors.recognitionReason = "Please provide a recognition reason";
     } else if (formData.recognitionReason.trim().length < 10) {
       newErrors.recognitionReason = "Reason must be at least 10 characters";
-    } else if (formData.recognitionReason.length > 500) {
-      newErrors.recognitionReason = "Reason must not exceed 500 characters";
+    } else if (formData.recognitionReason.length > 1000) {
+      newErrors.recognitionReason = "Reason must not exceed 1000 characters";
     }
 
     if (formData.valueIds.length === 0) {
@@ -223,11 +229,7 @@ export const CardForm: React.FC = () => {
 
         await api.createCard(cardRequest);
 
-        setSuccessMessage("Recognition card sent successfully! 🎉");
-        
-        // Trigger confetti and success overlay
-        setShowConfetti(true);
-        setShowSuccessOverlay(true);
+        setSuccessMessage("Thank you for spreading positivity! Your recognition has been sent. ✨");
 
         // If running in a Teams Task Module (Message Extension), submit the task
         // This will close the popup and pass the data back to our Bot backend
@@ -244,11 +246,10 @@ export const CardForm: React.FC = () => {
           return;
         }
 
-        // Reset form if not in a task (will be handled by form reset animation)
-        // Delay reset to allow success animation to play
+        // Reset form after a short delay to let user see the success message
         setTimeout(() => {
           resetFormWithAnimation();
-        }, 5000); // Wait for success overlay to auto-dismiss
+        }, 3000);
       } catch (error: any) {
         const errorMessage = error.message || "Failed to send recognition card";
         setApiError({
@@ -282,6 +283,7 @@ export const CardForm: React.FC = () => {
     // Clear recognition reason second
     setTimeout(() => {
       setFormData((prev) => ({ ...prev, recognitionReason: "" }));
+      setKeyInfo("");
     }, 200);
     
     // Clear values third
@@ -294,8 +296,6 @@ export const CardForm: React.FC = () => {
       setErrors({});
       setSuccessMessage("");
       setApiError(null);
-      setShowSuccessOverlay(false);
-      setShowConfetti(false);
       setIsResetting(false);
     }, 400);
   };
@@ -310,13 +310,58 @@ export const CardForm: React.FC = () => {
     setApiError(null);
   };
 
-  const handleSuccessOverlayDismiss = () => {
-    setShowSuccessOverlay(false);
-    setSuccessMessage("");
-  };
+  const handleGenerateReason = async () => {
+    if (!keyInfo.trim()) {
+      setApiError({
+        message: "Please enter key information to generate recognition reason",
+        retryable: false,
+      });
+      return;
+    }
+    if (formData.valueIds.length === 0) {
+      setApiError({
+        message: "Please select at least one company value",
+        retryable: false,
+      });
+      return;
+    }
+    if (formData.recipients.length === 0) {
+      setApiError({
+        message: "Please select at least one recipient",
+        retryable: false,
+      });
+      return;
+    }
 
-  const handleConfettiComplete = () => {
-    setShowConfetti(false);
+    setIsGenerating(true);
+    setApiError(null);
+    try {
+      const selectedValues = companyValues.filter((v) =>
+        formData.valueIds.includes(v.id)
+      );
+      const valueNames = selectedValues.map((v) => v.name);
+      const recipientNames = formData.recipients.map((r) => r.name);
+      
+      const generatedReason = await api.generateRecognitionReason({
+        keyInfo: keyInfo.trim(),
+        valueNames,
+        senderName: "You", // In Teams context, we use a generic sender name
+        recipientNames,
+      });
+      
+      setFormData((prev) => ({ ...prev, recognitionReason: generatedReason }));
+      if (errors.recognitionReason) {
+        setErrors((prev) => ({ ...prev, recognitionReason: undefined }));
+      }
+    } catch (error: any) {
+      setApiError({
+        message: error.message || "Failed to generate recognition reason",
+        retryable: true,
+        operation: handleGenerateReason,
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const setRecipients = (recipients: Recipient[]) => {
@@ -331,7 +376,7 @@ export const CardForm: React.FC = () => {
     
     // Clear error if field becomes valid
     if (errors.recognitionReason) {
-      if (value.trim().length >= 10 && value.length <= 500) {
+      if (value.trim().length >= 10 && value.length <= 1000) {
         setErrors((prev) => ({ ...prev, recognitionReason: undefined }));
       }
     }
@@ -350,20 +395,6 @@ export const CardForm: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      {/* Confetti Effect */}
-      <ConfettiEffect 
-        active={showConfetti} 
-        onComplete={handleConfettiComplete}
-      />
-      
-      {/* Success Overlay */}
-      <SuccessOverlay
-        visible={showSuccessOverlay}
-        message="Recognition card sent successfully! 🎉"
-        onDismiss={handleSuccessOverlayDismiss}
-        dismissDelay={5000}
-      />
-      
       <div className={styles.header}>
         <Text as="h1" size={900} weight="bold">
           Send Recognition Card
@@ -380,7 +411,7 @@ export const CardForm: React.FC = () => {
       {successMessage && (
         <MessageBar intent="success" className={styles.message}>
           <MessageBarBody>
-            <MessageBarTitle>Success</MessageBarTitle>
+            <MessageBarTitle>Sent!</MessageBarTitle>
             {successMessage}
           </MessageBarBody>
         </MessageBar>
@@ -398,6 +429,7 @@ export const CardForm: React.FC = () => {
       )}
 
       <form onSubmit={handleSubmit} className={styles.form}>
+        {/* Step 1: Select Recipients */}
         <div ref={recipientFieldRef} className={`${recipientShake.animationClass} ${isResetting ? styles.fieldResetting : ''}`}>
           <RecipientSelector
             selectedRecipients={formData.recipients}
@@ -406,7 +438,58 @@ export const CardForm: React.FC = () => {
           />
         </div>
 
+        {/* Step 2: Select Company Values */}
+        <div ref={valuesFieldRef} className={`${valuesShake.animationClass} ${isResetting ? styles.fieldResetting : ''}`}>
+          <ValueSelector
+            values={companyValues}
+            selectedValueIds={formData.valueIds}
+            onChange={handleValuesChange}
+            error={errors.valueIds}
+            loading={loadingValues}
+          />
+        </div>
+
+        {/* Step 3: AI Generation + Recognition Reason */}
         <div ref={reasonFieldRef} className={`${reasonShake.animationClass} ${isResetting ? styles.fieldResetting : ''}`}>
+          <Field
+            label="Key Information (for AI generation)"
+            className={styles.keyInfoField}
+            hint={
+              formData.recipients.length === 0 || formData.valueIds.length === 0
+                ? "💡 Select recipients and company values above first, then enter key points to generate with AI"
+                : "Enter key points about what they did, project name, impact, etc."
+            }
+          >
+            <Textarea
+              value={keyInfo}
+              onChange={(e) => setKeyInfo(e.target.value)}
+              placeholder="e.g., Led the Q4 product launch, mentored 3 new team members, resolved critical production issue..."
+              resize="vertical"
+              rows={2}
+            />
+          </Field>
+          <div className={styles.generateRow}>
+            <Button
+              appearance="secondary"
+              icon={isGenerating ? undefined : <SparkleRegular />}
+              onClick={handleGenerateReason}
+              disabled={
+                isGenerating ||
+                !keyInfo.trim() ||
+                formData.valueIds.length === 0 ||
+                formData.recipients.length === 0
+              }
+            >
+              {isGenerating ? (
+                <span className={styles.loadingSpinner}>
+                  <Spinner size="tiny" />
+                  <span>Generating...</span>
+                </span>
+              ) : (
+                "AI Generate"
+              )}
+            </Button>
+          </div>
           <Field
             label="Recognition Reason"
             required
@@ -416,7 +499,7 @@ export const CardForm: React.FC = () => {
             hint={
               <CharacterCounter
                 current={formData.recognitionReason.length}
-                max={500}
+                max={1000}
                 warningThreshold={0.8}
                 errorThreshold={1.0}
               />
@@ -425,21 +508,11 @@ export const CardForm: React.FC = () => {
             <Textarea
               value={formData.recognitionReason}
               onChange={(e) => handleReasonChange(e.target.value)}
-              placeholder="Describe why you're recognizing this person..."
+              placeholder="Describe why you're recognizing this person, or use AI Generate above..."
               resize="vertical"
               rows={5}
             />
           </Field>
-        </div>
-
-        <div ref={valuesFieldRef} className={`${valuesShake.animationClass} ${isResetting ? styles.fieldResetting : ''}`}>
-          <ValueSelector
-            values={companyValues}
-            selectedValueIds={formData.valueIds}
-            onChange={handleValuesChange}
-            error={errors.valueIds}
-            loading={loadingValues}
-          />
         </div>
 
         <CardPreview

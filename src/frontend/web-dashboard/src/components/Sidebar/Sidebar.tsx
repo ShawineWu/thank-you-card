@@ -2,12 +2,12 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
-  Send,
   Inbox,
   BarChart3,
   Settings,
   Heart,
   Award,
+  Rss,
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 
@@ -18,10 +18,13 @@ export const Sidebar: React.FC = () => {
       label: "Overview",
       path: "/dashboard",
     },
-    { icon: <Inbox size={20} />, label: "Received Cards", path: "/received" },
-    { icon: <Send size={20} />, label: "Sent Cards", path: "/sent" },
+    {
+      icon: <Rss size={20} />,
+      label: "Feed",
+      path: "/feed",
+    },
+    { icon: <Inbox size={20} />, label: "My Profile", path: "/profile" },
     { icon: <Award size={20} />, label: "Company Values", path: "/values" },
-    { icon: <BarChart3 size={20} />, label: "Statistics", path: "/stats" },
     {
       icon: <BarChart3 size={20} />,
       label: "HR Analytics",

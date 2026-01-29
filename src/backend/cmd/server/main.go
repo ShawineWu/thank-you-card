@@ -65,17 +65,13 @@ func main() {
 	milestoneRepo := repositories.NewGormMilestoneRepository(database.DB)
 	analyticsRepo := repositories.NewGormAnalyticsRepository(database.DB)
 
-	// 4. Initialize external services
-	var employeeService services.EmployeeService
-	if cfg.External.AzureClientID != "" && cfg.External.AzureClientSecret != "" {
-		employeeService = services.NewGraphEmployeeService(
-			cfg.External.AzureTenantID,
-			cfg.External.AzureClientID,
-			cfg.External.AzureClientSecret,
-		)
-	} else {
-		employeeService = services.NewMockEmployeeService(cfg.External.EmployeeDirectoryURL)
-	}
+	// 4. Initialize external services using factory function
+	employeeService := services.NewEmployeeService(services.EmployeeServiceConfig{
+		AzureTenantID:     cfg.External.AzureTenantID,
+		AzureClientID:     cfg.External.AzureClientID,
+		AzureClientSecret: cfg.External.AzureClientSecret,
+		MockBaseURL:       cfg.External.EmployeeDirectoryURL,
+	})
 
 	teamsPublisher := events.NewTeamsWebhookPublisher(cfg.External.TeamsWebhookURL, true)
 

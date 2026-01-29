@@ -17,6 +17,17 @@ if (AUTH_TOKEN) {
   headers["Authorization"] = `Bearer ${AUTH_TOKEN}`;
 }
 
+export interface GenerateReasonRequest {
+  keyInfo: string;
+  valueNames: string[];
+  senderName: string;
+  recipientNames: string[];
+}
+
+export interface GenerateReasonResponse {
+  recognitionReason: string;
+}
+
 export const api = {
   async getCompanyValues(): Promise<CompanyValue[]> {
     const response = await fetch(`${API_BASE_URL}/values`, { headers });
@@ -55,5 +66,23 @@ export const api = {
     if (!data.success) {
       throw new Error(data.error.message);
     }
+  },
+
+  async generateRecognitionReason(
+    request: GenerateReasonRequest
+  ): Promise<string> {
+    const response = await fetch(`${API_BASE_URL}/cards/generate-reason`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(request),
+    });
+
+    const data: ApiResponse<GenerateReasonResponse> = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.error.message);
+    }
+
+    return data.data.recognitionReason;
   },
 };

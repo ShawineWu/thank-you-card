@@ -1,12 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import { useAuthStore } from "@/store/authStore";
-import { LogOut, Bell } from "lucide-react";
+import { LogOut, Bell, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { SendCardDrawer } from "@/components/Cards/SendCardDrawer";
 import { initConfigProcess } from "@/app";
 
 export const Header: React.FC = () => {
   const { user } = useAuthStore();
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const userName =
     user?.profile.name || user?.profile.preferred_username || "User";
 
@@ -39,6 +41,16 @@ export const Header: React.FC = () => {
 
       <div className="flex items-center gap-6">
         <Button
+          variant="default"
+          size="sm"
+          onClick={() => setDrawerOpen(true)}
+          className="gap-2 rounded-full px-4 font-medium h-9"
+        >
+          <Send size={16} />
+          <span className="hidden sm:inline">Send Card</span>
+        </Button>
+
+        <Button
           variant="ghost"
           size="icon"
           className="text-muted-foreground hover:text-foreground"
@@ -70,6 +82,14 @@ export const Header: React.FC = () => {
           <span className="hidden sm:inline">Logout</span>
         </Button>
       </div>
+
+      <SendCardDrawer
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        onSuccess={() => {
+          // Optionally refresh data or show notification
+        }}
+      />
     </header>
   );
 };

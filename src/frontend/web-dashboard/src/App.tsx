@@ -2,10 +2,9 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { CallbackPage } from "./pages/Callback";
 import { Dashboard } from "./pages/Dashboard";
+import { Feed } from "./pages/Feed";
 import { MainLayout } from "./components/Layout/MainLayout";
-import { ReceivedCards } from "./pages/ReceivedCards";
-import { SentCards } from "./pages/SentCards";
-import { Stats } from "./pages/Stats";
+import { Profile } from "./pages/Profile";
 import { Settings } from "./pages/Settings";
 import { HRAnalytics } from "./pages/HRAnalytics";
 import { CompanyValues } from "./pages/CompanyValues";
@@ -29,9 +28,8 @@ function App() {
         >
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
-          <Route path="received" element={<ReceivedCards />} />
-          <Route path="sent" element={<SentCards />} />
-          <Route path="stats" element={<Stats />} />
+          <Route path="feed" element={<Feed />} />
+          <Route path="profile" element={<Profile />} />
           <Route path="values" element={<CompanyValues />} />
           <Route path="analytics" element={<HRAnalytics />} />
           <Route path="settings" element={<Settings />} />

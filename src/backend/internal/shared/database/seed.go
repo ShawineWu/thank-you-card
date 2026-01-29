@@ -245,6 +245,77 @@ func Seed() error {
 		log.Printf("Seeded company value: %s (%s)", v.Name, v.Code)
 	}
 
+	// Seed sample milestones for demo users
+	if err := seedMilestones(); err != nil {
+		log.Printf("Warning: Failed to seed milestones: %v", err)
+	}
+
 	log.Println("Initial data seeding completed successfully")
+	return nil
+}
+
+// seedMilestones creates sample milestone achievements for demo purposes
+func seedMilestones() error {
+	// Sample employee IDs - these would typically come from your auth system
+	// Using common test user IDs
+	sampleEmployees := []string{
+		"demo-user-001",
+		"demo-user-002",
+	}
+
+	milestones := []models.EmployeeMilestone{
+		// Demo user 1 - has achieved several milestones
+		{
+			EmployeeID:    sampleEmployees[0],
+			MilestoneType: models.MilestoneTypeCardsReceived,
+			Threshold:     5,
+			AchievedAt:    time.Now().AddDate(0, -3, 0).UTC(),
+			Title:         "5 Cards Received",
+			Description:   "Congratulations! You've received 5 recognition cards. Your great work is being noticed!",
+		},
+		{
+			EmployeeID:    sampleEmployees[0],
+			MilestoneType: models.MilestoneTypeCardsReceived,
+			Threshold:     10,
+			AchievedAt:    time.Now().AddDate(0, -1, 0).UTC(),
+			Title:         "10 Cards Received",
+			Description:   "Impressive! You've received 10 recognition cards. Keep up the excellent work!",
+		},
+		{
+			EmployeeID:    sampleEmployees[0],
+			MilestoneType: models.MilestoneTypeCardsSent,
+			Threshold:     5,
+			AchievedAt:    time.Now().AddDate(0, -2, 0).UTC(),
+			Title:         "5 Cards Sent",
+			Description:   "Amazing! You've sent 5 thank you cards, recognizing and appreciating your colleagues.",
+		},
+		// Demo user 2 - fewer milestones
+		{
+			EmployeeID:    sampleEmployees[1],
+			MilestoneType: models.MilestoneTypeCardsReceived,
+			Threshold:     5,
+			AchievedAt:    time.Now().AddDate(0, -1, -15).UTC(),
+			Title:         "5 Cards Received",
+			Description:   "Congratulations! You've received 5 recognition cards. Your great work is being noticed!",
+		},
+	}
+
+	for _, m := range milestones {
+		// Check if milestone already exists
+		var count int64
+		DB.Model(&models.EmployeeMilestone{}).
+			Where("employee_id = ? AND milestone_type = ? AND threshold = ?",
+				m.EmployeeID, m.MilestoneType, m.Threshold).
+			Count(&count)
+		if count > 0 {
+			continue // Already exists, skip
+		}
+		if err := DB.Create(&m).Error; err != nil {
+			log.Printf("Warning: Failed to seed milestone for %s: %v", m.EmployeeID, err)
+			continue
+		}
+		log.Printf("Seeded milestone: %s - %s (%d)", m.EmployeeID, m.MilestoneType, m.Threshold)
+	}
+
 	return nil
 }

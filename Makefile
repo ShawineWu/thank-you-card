@@ -1,4 +1,4 @@
-.PHONY: up down restart logs install dev dev-backend dev-frontend help
+.PHONY: up down restart logs install dev dev-backend dev-frontend db-reset help
 
 # Default target
 help:
@@ -8,6 +8,7 @@ help:
 	@echo "  make down          - Stop all docker services"
 	@echo "  make restart       - Restart all docker services"
 	@echo "  make logs          - View database logs"
+	@echo "  make db-reset      - Reset database (WARNING: deletes all data)"
 	@echo "  make dev           - One-shot: start backend + frontend (DB must be running)"
 	@echo "  make dev-backend   - Run backend services only"
 	@echo "  make dev-frontend  - Run frontend services only"
@@ -31,6 +32,24 @@ restart: down up
 
 logs:
 	docker-compose logs -f
+
+db-reset:
+	@echo "WARNING: This will delete all database data!"
+	@read -p "Are you sure? [y/N] " -n 1 -r; \
+	echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		echo "Stopping database..."; \
+		docker-compose down; \
+		echo "Removing database volume..."; \
+		docker volume rm thank-you-card-1_postgres_data || true; \
+		echo "Starting fresh database..."; \
+		docker-compose up -d; \
+		echo "Waiting for database to be ready..."; \
+		sleep 5; \
+		echo "Database reset complete!"; \
+	else \
+		echo "Database reset cancelled."; \
+	fi
 
 dev:
 	@echo "Starting all services (backend + frontend)..."
