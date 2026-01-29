@@ -8,6 +8,13 @@ import { CreateCardRequest, EmployeeSummary } from '@/types/card'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -32,6 +39,7 @@ const CreateCardPage = () => {
   const [valueIds, setValueIds] = useState<number[]>([])
   const [reason, setReason] = useState('')
   const [userInput, setUserInput] = useState('')
+  const [language, setLanguage] = useState<string>('en') // Default to English
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [previewOpen, setPreviewOpen] = useState(false)
 
@@ -42,7 +50,7 @@ const CreateCardPage = () => {
   })
 
   const generateTextMutation = useMutation({
-    mutationFn: (data: { recipientName: string; userInput: string; valueNames: string[] }) => {
+    mutationFn: (data: { recipientName: string; userInput: string; valueNames: string[]; language: string }) => {
       console.log('Calling AI API with data:', data)
       return aiApi.generateText(data)
     },
@@ -154,9 +162,31 @@ const CreateCardPage = () => {
 
             {/* User Input for AI Generation */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Key Information (for AI generation)
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">
+                  Key Information (for AI generation)
+                </label>
+                <div className="flex items-center space-x-2">
+                  <label className="text-xs text-muted-foreground">Language:</label>
+                  <Select value={language} onValueChange={setLanguage}>
+                    <SelectTrigger className="w-[140px] h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="en">English</SelectItem>
+                      <SelectItem value="zh">中文</SelectItem>
+                      <SelectItem value="ja">日本語</SelectItem>
+                      <SelectItem value="ko">한국어</SelectItem>
+                      <SelectItem value="fr">Français</SelectItem>
+                      <SelectItem value="de">Deutsch</SelectItem>
+                      <SelectItem value="es">Español</SelectItem>
+                      <SelectItem value="pt">Português</SelectItem>
+                      <SelectItem value="it">Italiano</SelectItem>
+                      <SelectItem value="ru">Русский</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               <textarea
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
@@ -195,6 +225,7 @@ const CreateCardPage = () => {
                     senderDepartment: user?.employee?.department || '',
                     userInput: userInput.trim(),
                     valueNames,
+                    language: language || 'en', // Default to English if not set
                   })
                 }}
                 disabled={generateTextMutation.isPending}

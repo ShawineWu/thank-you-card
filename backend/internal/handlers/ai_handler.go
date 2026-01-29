@@ -26,6 +26,7 @@ type GenerateTextRequest struct {
 	SenderDepartment string   `json:"senderDepartment"`
 	UserInput        string   `json:"userInput" binding:"required"`
 	ValueNames       []string `json:"valueNames"`
+	Language         string   `json:"language"` // "zh" for Chinese, "en" for English, defaults to "en"
 }
 
 type GenerateTextResponse struct {
@@ -43,8 +44,13 @@ func (h *AIHandler) GenerateRecognitionText(c *gin.Context) {
 		return
 	}
 
-	log.Printf("INFO: Request data - recipient: %s, sender: %s (%s), input: %s, values: %v\n",
-		req.RecipientName, req.SenderName, req.SenderDepartment, req.UserInput, req.ValueNames)
+	// Default to English if language is not provided
+	if req.Language == "" {
+		req.Language = "en"
+	}
+
+	log.Printf("INFO: Request data - recipient: %s, sender: %s (%s), input: %s, values: %v, language: %s\n",
+		req.RecipientName, req.SenderName, req.SenderDepartment, req.UserInput, req.ValueNames, req.Language)
 
 	// Validate input
 	if req.RecipientName == "" {
@@ -66,6 +72,7 @@ func (h *AIHandler) GenerateRecognitionText(c *gin.Context) {
 		req.SenderDepartment,
 		req.UserInput,
 		req.ValueNames,
+		req.Language,
 	)
 	if err != nil {
 		log.Printf("ERROR: Failed to generate text: %v\n", err)
