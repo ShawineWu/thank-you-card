@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"os"
 )
 
@@ -41,6 +40,9 @@ type ExternalConfig struct {
 	EmployeeDirectoryURL string
 	TeamsWebhookURL      string
 	PlatUMSURL           string
+	AzureTenantID        string
+	AzureClientID        string
+	AzureClientSecret    string
 }
 
 // Load loads configuration from environment variables
@@ -67,6 +69,9 @@ func Load() (*Config, error) {
 			EmployeeDirectoryURL: getEnv("EMPLOYEE_DIRECTORY_URL", ""),
 			TeamsWebhookURL:      getEnv("TEAMS_WEBHOOK_URL", ""),
 			PlatUMSURL:           getEnv("PLAT_UMS_URL", ""),
+			AzureTenantID:        getEnv("AZURE_TENANT_ID", ""),
+			AzureClientID:        getEnv("AZURE_CLIENT_ID", ""),
+			AzureClientSecret:    getEnv("AZURE_CLIENT_SECRET", ""),
 		},
 	}
 
@@ -80,21 +85,24 @@ func Load() (*Config, error) {
 
 // Validate checks if all required configuration is present
 func (c *Config) Validate() error {
-	if c.Database.Password == "" {
-		return fmt.Errorf("DB_PASSWORD is required")
-	}
+	// Optional for local dev: allow empty password
+	// if c.Database.Password == "" {
+	// 	return fmt.Errorf("DB_PASSWORD is required")
+	// }
 
-	if c.Auth.JWTSecret == "" {
-		return fmt.Errorf("JWT_SECRET is required")
-	}
+	// if c.Auth.JWTSecret == "" {
+	// 	return fmt.Errorf("JWT_SECRET is required")
+	// }
 
-	if c.External.EmployeeDirectoryURL == "" {
-		return fmt.Errorf("EMPLOYEE_DIRECTORY_URL is required")
-	}
+	// Optional for local dev
+	// if c.External.EmployeeDirectoryURL == "" {
+	// 	return fmt.Errorf("EMPLOYEE_DIRECTORY_URL is required")
+	// }
 
-	if c.External.TeamsWebhookURL == "" {
-		return fmt.Errorf("TEAMS_WEBHOOK_URL is required")
-	}
+	// Optional: Teams Webhook URL (can be empty for local dev)
+	// if c.External.TeamsWebhookURL == "" {
+	// 	return fmt.Errorf("TEAMS_WEBHOOK_URL is required")
+	// }
 
 	return nil
 }

@@ -12,6 +12,16 @@ import (
 // AuthMiddleware validates JWT tokens and extracts user information
 func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Development mode: skip authentication
+		if gin.Mode() == gin.DebugMode {
+			// Set mock user for development
+			c.Set("userId", "d3dc438c-1de2-49dc-ae8b-8dffb7fcb2cc")
+			c.Set("userName", "Youshan Li (SZX)")
+			c.Set("userEmail", "youshan.li@castlery.com")
+			c.Next()
+			return
+		}
+
 		// Get Authorization header
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -126,6 +136,15 @@ func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 			c.Set("userRoles", roles)
 		}
 
+		// Extract user name if available
+		if name, ok := claims["name"].(string); ok {
+			c.Set("userName", name)
+		} else if name, ok := claims["displayName"].(string); ok {
+			c.Set("userName", name)
+		} else if name, ok := claims["unique_name"].(string); ok {
+			c.Set("userName", name)
+		}
+
 		c.Next()
 	}
 }
@@ -153,6 +172,17 @@ func GetUserEmail(c *gin.Context) string {
 	}
 
 	str, _ := email.(string)
+	return str
+}
+
+// GetUserName retrieves the user name from the context
+func GetUserName(c *gin.Context) string {
+	name, exists := c.Get("userName")
+	if !exists {
+		return "Unknown User"
+	}
+
+	str, _ := name.(string)
 	return str
 }
 

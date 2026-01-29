@@ -91,70 +91,72 @@ src/
   - [ ] 配置 Teams Channel Webhook
   - [ ] 实现消息格式化（Adaptive Card）
   - [ ] 错误处理和重试机制
-- [ ] 数据模型和存储
-  - [ ] 实现 Card 数据模型
-  - [ ] 实现 Recipient 关联表
-  - [ ] 实现 Value 关联表
-  - [ ] 数据库迁移脚本
+- [x] 数据模型和存储 ✅
+  - [x] 实现 Card 数据模型
+  - [x] 实现 Recipient 关联表
+  - [x] 实现 Value 关联表
+  - [x] 数据库迁移脚本
 
 ### Phase 4: Web 后台管理页面开发
-- [ ] Web App 基础架构
-  - [ ] 设置页面路由（react-router-dom）
-  - [ ] 配置状态管理（Zustand）
-  - [ ] 实现布局组件（Layout, Header, Sidebar）
-  - [ ] 集成 AuthService 和认证状态
-- [ ] 仪表盘页面
-  - [ ] 总览统计数据展示
-  - [ ] 最近发送/接收的卡片列表
-  - [ ] Top 10 被认可员工
-- [ ] 卡片管理页面
-  - [ ] 发送记录查看（分页、筛选）
-  - [ ] 接收记录查看（分页、筛选）
-  - [ ] 卡片详情展示
-  - [ ] 卡片列表组件复用
-- [ ] 个人统计页面
-  - [ ] 发送/接收数量统计
-  - [ ] 最常用价值观统计
-  - [ ] 统计图表可视化
-- [ ] 筛选和搜索功能
-  - [ ] 按价值观筛选
-  - [ ] 按发送人/接收人筛选
-  - [ ] 按时间范围筛选
-  - [ ] 关键词搜索
-  - [ ] 筛选状态管理
+- [x] Web App 基础架构 ✅
+  - [x] 设置页面路由（react-router-dom）
+  - [x] 配置状态管理（Zustand）
+  - [x] 实现布局组件（Layout, Header, Sidebar）
+  - [x] 集成 AuthService 和认证状态
+- [x] 仪表盘页面 ✅
+  - [x] 总览统计数据展示
+  - [x] 最近发送/接收的卡片列表
+  - [x] Top 10 被认可员工
+- [x] 卡片管理页面 ✅
+  - [x] 发送记录查看（分页、筛选）
+  - [x] 接收记录查看（分页、筛选）
+  - [x] 卡片详情展示
+  - [x] 卡片列表组件复用
+- [x] 个人统计页面 ✅
+  - [x] 发送/接收数量统计
+  - [x] 最常用价值观统计
+  - [x] 统计图表可视化
+- [x] 筛选和搜索功能 ✅
+  - [x] 按价值观筛选
+  - [x] 按发送人/接收人筛选
+  - [x] 按时间范围筛选
+  - [x] 关键词搜索
+  - [x] 筛选状态管理
 
 ### Phase 5: Teams App 前端开发
-- [ ] Teams App 基础架构
-  - [ ] 创建 Teams App Manifest
-  - [ ] 配置 App 图标和描述
-  - [ ] 初始化 Teams SDK
-  - [ ] 配置 Teams 主题适配
-- [ ] 感谢卡创建表单
-  - [ ] 收件人选择器（支持多选）
-  - [ ] 感谢原因文本输入
-  - [ ] 价值观选择器（1-3个）
-  - [ ] 卡片预览功能
-  - [ ] 表单验证
-- [ ] API 集成
-  - [ ] 集成创建 card API
-  - [ ] 错误处理和用户反馈
+- [x] Teams App 基础架构 ✅
+  - [x] 创建 Teams App Manifest
+  - [x] 配置 App 图标和描述
+  - [x] 初始化 Teams SDK
+  - [x] 配置 Teams 主题适配
+  - [x] 使用固定公司价值观数据
+  - [x] Hover 显示价值观详情
+- [x] 感谢卡创建表单 ✅
+  - [x] 收件人选择器（支持多选）
+  - [x] 感谢原因文本输入
+  - [x] 价值观选择器（1-3个，带 Tooltip）
+  - [x] 卡片预览功能
+  - [x] 表单验证
+- [x] API 集成 ✅
+  - [x] 集成创建 card API
+  - [x] 错误处理和用户反馈
 
 ### Phase 6: Analytics Service 开发（HR 管理员功能）
-- [ ] Analytics APIs
-  - [ ] GET /api/analytics/dashboard - 分析仪表盘
-  - [ ] POST /api/analytics/export - 数据导出（CSV）
-  - [ ] GET /api/analytics/recognizers/top - 最活跃认可者
-  - [ ] GET /api/analytics/teams - 团队分析
-  - [ ] GET /api/analytics/values/distribution - 价值观分布
-- [ ] 分析计算逻辑
-  - [ ] 统计聚合服务
-  - [ ] CSV 导出服务
-  - [ ] 数据缓存策略
-- [ ] HR 管理页面
-  - [ ] HR 分析仪表盘 UI
-  - [ ] 数据导出功能
-  - [ ] 团队认可模式可视化
-  - [ ] 权限控制（仅 HR Admin）
+- [x] Analytics APIs ✅
+  - [x] GET /api/analytics/dashboard - 分析仪表盘
+  - [x] POST /api/analytics/export - 数据导出（CSV）
+  - [x] GET /api/analytics/recognizers/top - 最活跃认可者
+  - [x] GET /api/analytics/teams - 团队分析
+  - [x] GET /api/analytics/values/distribution - 价值观分布
+- [x] 分析计算逻辑 ✅
+  - [x] 统计聚合服务
+  - [x] CSV 导出服务
+  - [x] 数据缓存策略
+- [x] HR 管理页面 ✅
+  - [x] HR 分析仪表盘 UI
+  - [x] 数据导出功能
+  - [x] 团队认可模式可视化
+  - [x] 权限控制（仅 HR Admin）
 
 ### Phase 7: 集成和测试
 - [ ] 单元测试
@@ -209,7 +211,7 @@ src/
 
 ### 🎯 下一步
 - **Phase 3**: Card Service 后台开发 - Card Management & Statistics APIs (100%)
-- **Phase 4**: Web Dashboard 业务页面开发
+- **Phase 4**: Web Dashboard 业务页面开发 (90%)
 - **Phase 5**: Teams App 前端开发
 
 ### 📊 整体进度
@@ -242,5 +244,6 @@ src/
 - **项目规划**: `plan.md`
 - **需求文档**: `inception/units/`
 - **详细设计**: `construction/`
+- **Teams App 打包与部署**: [teams_app_bundle.md](file:///Users/youshanli/Workspaces/Programs/Castlery/thank-you-card-1/construction/teams_app_bundle.md)
 - **Web Dashboard 认证实现**: `.gemini/antigravity/brain/c88d7f67-8541-49d8-bf64-eb3c7be2d268/walkthrough.md`
 - **原始实施计划**: `.gemini/antigravity/brain/c29d65e9-5ccc-432c-b02a-0527888b48e5/implementation_plan.md.resolved`

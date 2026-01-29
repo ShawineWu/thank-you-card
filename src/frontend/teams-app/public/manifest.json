@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/teams/v1.16/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.16",
+  "id": "0c070cb8-fa82-4c38-9af6-12b24058c5fa",
+  "version": "1.0.0",
+  "developer": {
+    "name": "Castlery",
+    "websiteUrl": "https://www.castlery.com",
+    "privacyUrl": "https://www.castlery.com/privacy",
+    "termsOfUseUrl": "https://www.castlery.com/terms-of-use"
+  },
+  "name": {
+    "short": "ThankYou",
+    "full": "ThankYou Recognition App"
+  },
+  "description": {
+    "short": "Recognize your colleagues",
+    "full": "Send recognition cards to celebrate company values and appreciate your team members"
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "accentColor": "#6366f1",
+  "staticTabs": [
+    {
+      "entityId": "thankyou-tab",
+      "name": "Send Thanks",
+      "contentUrl": "https://YOUR_NGROK_URL",
+      "websiteUrl": "https://YOUR_NGROK_URL",
+      "scopes": ["personal", "team"]
+    }
+  ],
+  "composeExtensions": [],
+  "permissions": ["identity"],
+  "validDomains": ["YOUR_NGROK_DOMAIN"]
+}

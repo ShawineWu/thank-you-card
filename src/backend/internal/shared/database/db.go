@@ -9,6 +9,8 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+
+	"github.com/castlery/thank-you-card/internal/card/domain/models"
 )
 
 var DB *gorm.DB
@@ -26,7 +28,7 @@ type Config struct {
 // Initialize sets up the database connection
 func Initialize(config Config) error {
 	dsn := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s search_path=public",
 		config.Host,
 		config.Port,
 		config.User,
@@ -70,6 +72,38 @@ func Initialize(config Config) error {
 
 	DB = db
 	log.Println("Database connection established successfully")
+
+	// Diagnostics: Check current database and tables
+	var dbName string
+	db.Raw("SELECT current_database()").Scan(&dbName)
+	log.Printf("Connected to database: %s", dbName)
+
+	var tables []string
+	db.Raw("SELECT tablename FROM pg_tables WHERE schemaname = 'public'").Scan(&tables)
+	log.Printf("Tables in public schema: %v", tables)
+
+	return nil
+}
+
+// AutoMigrate handles automatic schema migration
+func AutoMigrate() error {
+	if DB == nil {
+		return fmt.Errorf("database not initialized")
+	}
+
+	log.Println("Running database auto-migration...")
+	err := DB.AutoMigrate(
+		&models.Card{},
+		&models.CardRecipient{},
+		&models.CardValue{},
+		&models.CompanyValue{},
+		&models.EmployeeMilestone{},
+	)
+	if err != nil {
+		return fmt.Errorf("auto-migration failed: %w", err)
+	}
+
+	log.Println("Database auto-migration completed successfully")
 	return nil
 }
 

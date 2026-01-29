@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"fmt"
 	"math"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/castlery/thank-you-card/internal/card/domain/models"
@@ -19,16 +21,19 @@ import (
 type CardHandler struct {
 	cardCreationService *services.CardCreationService
 	cardRepo            repositories.CardRepository
+	employeeService     services.EmployeeService
 }
 
 // NewCardHandler creates a new card handler
 func NewCardHandler(
 	cardCreationService *services.CardCreationService,
 	cardRepo repositories.CardRepository,
+	employeeService services.EmployeeService,
 ) *CardHandler {
 	return &CardHandler{
 		cardCreationService: cardCreationService,
 		cardRepo:            cardRepo,
+		employeeService:     employeeService,
 	}
 }
 
@@ -46,29 +51,104 @@ func (h *CardHandler) CreateCard(c *gin.Context) {
 		return
 	}
 
+	senderName := middleware.GetUserName(c)
+
+	// Convert string valueIds to UUID
+	valueUUIDs := make([]uuid.UUID, len(req.ValueIDs))
+	for i, valueIDStr := range req.ValueIDs {
+		valueUUID, err := uuid.Parse(valueIDStr)
+		if err != nil {
+			h.errorResponse(c, http.StatusBadRequest, "INVALID_VALUE_ID", fmt.Sprintf("Invalid value ID format: %s", valueIDStr), err.Error())
+			return
+		}
+		valueUUIDs[i] = valueUUID
+	}
+
+	// Map recipients for domain service
+	recipients := make([]map[string]string, len(req.Recipients))
+	for i, r := range req.Recipients {
+		recipients[i] = map[string]string{
+			"id":   r.ID,
+			"name": r.Name,
+		}
+	}
+
 	card, err := h.cardCreationService.CreateCard(
 		senderID,
-		req.RecipientIDs,
+		senderName,
+		recipients,
 		req.RecognitionReason,
-		req.ValueIDs,
+		valueUUIDs,
 	)
 	if err != nil {
-		h.errorResponse(c, http.StatusInternalServerError, "CREATION_FAILED", "Failed to create card", err.Error())
+		// Business validation errors should be 400, not 500
+		status := http.StatusInternalServerError
+		if strings.Contains(err.Error(), "validation failed") || strings.Contains(err.Error(), "invalid") || strings.Contains(err.Error(), "not found") {
+			status = http.StatusBadRequest
+		}
+
+		h.errorResponse(c, status, "CREATION_FAILED", "Failed to create card", err.Error())
 		return
 	}
 
 	h.successResponse(c, http.StatusCreated, h.mapCardToResponse(card), "Card created successfully")
 }
 
-// GetCards handles GET /api/cards (company-wide feed)
-func (h *CardHandler) GetCards(c *gin.Context) {
-	var params dtos.PaginationParams
-	if err := c.ShouldBindQuery(&params); err != nil {
-		h.errorResponse(c, http.StatusBadRequest, "INVALID_PARAMS", "Invalid pagination parameters", err.Error())
+// SearchEmployees handles GET /api/employees/search
+func (h *CardHandler) SearchEmployees(c *gin.Context) {
+	query := c.Query("q")
+	if query == "" {
+		h.errorResponse(c, http.StatusBadRequest, "INVALID_QUERY", "Search query is required", nil)
 		return
 	}
 
-	cards, total, err := h.cardRepo.FindAll(params.Page, params.PageSize)
+	employees, err := h.employeeService.SearchEmployees(query)
+	if err != nil {
+		h.errorResponse(c, http.StatusInternalServerError, "SEARCH_FAILED", "Failed to search employees", err.Error())
+		return
+	}
+
+	// Map to DTO
+	resp := make([]dtos.EmployeeDTO, len(employees))
+	for i, emp := range employees {
+		resp[i] = dtos.EmployeeDTO{
+			ID:         emp.ID,
+			AADID:      emp.AADID,
+			Name:       emp.Name,
+			Email:      emp.Email,
+			Department: emp.Department,
+		}
+	}
+
+	h.successResponse(c, http.StatusOK, resp, "")
+}
+
+// GetCards handles GET /api/cards (company-wide feed)
+func (h *CardHandler) GetCards(c *gin.Context) {
+	var params dtos.CardFilterParams
+	if err := c.ShouldBindQuery(&params); err != nil {
+		h.errorResponse(c, http.StatusBadRequest, "INVALID_PARAMS", "Invalid filtering parameters", err.Error())
+		return
+	}
+
+	var startDate, endDate *string
+	if params.StartDate != "" {
+		startDate = &params.StartDate
+	}
+	if params.EndDate != "" {
+		endDate = &params.EndDate
+	}
+
+	cards, total, err := h.cardRepo.FindWithFilters(
+		params.SenderID,
+		params.RecipientID,
+		params.ValueIDs,
+		startDate,
+		endDate,
+		params.Search,
+		params.Page,
+		params.PageSize,
+	)
 	if err != nil {
 		h.errorResponse(c, http.StatusInternalServerError, "FETCH_FAILED", "Failed to fetch cards", err.Error())
 		return
@@ -108,13 +188,30 @@ func (h *CardHandler) GetReceivedCards(c *gin.Context) {
 		return
 	}
 
-	var params dtos.PaginationParams
+	var params dtos.CardFilterParams
 	if err := c.ShouldBindQuery(&params); err != nil {
-		h.errorResponse(c, http.StatusBadRequest, "INVALID_PARAMS", "Invalid pagination parameters", err.Error())
+		h.errorResponse(c, http.StatusBadRequest, "INVALID_PARAMS", "Invalid filtering parameters", err.Error())
 		return
 	}
 
-	cards, total, err := h.cardRepo.FindByRecipient(userID, params.Page, params.PageSize)
+	var startDate, endDate *string
+	if params.StartDate != "" {
+		startDate = &params.StartDate
+	}
+	if params.EndDate != "" {
+		endDate = &params.EndDate
+	}
+
+	cards, total, err := h.cardRepo.FindWithFilters(
+		params.SenderID,
+		userID, // Force current user as recipient
+		params.ValueIDs,
+		startDate,
+		endDate,
+		params.Search,
+		params.Page,
+		params.PageSize,
+	)
 	if err != nil {
 		h.errorResponse(c, http.StatusInternalServerError, "FETCH_FAILED", "Failed to fetch received cards", err.Error())
 		return
@@ -131,13 +228,30 @@ func (h *CardHandler) GetSentCards(c *gin.Context) {
 		return
 	}
 
-	var params dtos.PaginationParams
+	var params dtos.CardFilterParams
 	if err := c.ShouldBindQuery(&params); err != nil {
-		h.errorResponse(c, http.StatusBadRequest, "INVALID_PARAMS", "Invalid pagination parameters", err.Error())
+		h.errorResponse(c, http.StatusBadRequest, "INVALID_PARAMS", "Invalid filtering parameters", err.Error())
 		return
 	}
 
-	cards, total, err := h.cardRepo.FindBySender(userID, params.Page, params.PageSize)
+	var startDate, endDate *string
+	if params.StartDate != "" {
+		startDate = &params.StartDate
+	}
+	if params.EndDate != "" {
+		endDate = &params.EndDate
+	}
+
+	cards, total, err := h.cardRepo.FindWithFilters(
+		userID, // Force current user as sender
+		params.RecipientID,
+		params.ValueIDs,
+		startDate,
+		endDate,
+		params.Search,
+		params.Page,
+		params.PageSize,
+	)
 	if err != nil {
 		h.errorResponse(c, http.StatusInternalServerError, "FETCH_FAILED", "Failed to fetch sent cards", err.Error())
 		return
@@ -149,9 +263,12 @@ func (h *CardHandler) GetSentCards(c *gin.Context) {
 // Helper methods
 
 func (h *CardHandler) mapCardToResponse(card *models.Card) dtos.CardResponse {
-	recipients := make([]string, len(card.Recipients))
+	recipients := make([]dtos.RecipientResponse, len(card.Recipients))
 	for i, r := range card.Recipients {
-		recipients[i] = r.RecipientID
+		recipients[i] = dtos.RecipientResponse{
+			ID:   r.RecipientID,
+			Name: r.RecipientName,
+		}
 	}
 
 	selectedValues := make([]dtos.ValueResponse, len(card.Values))
@@ -167,6 +284,7 @@ func (h *CardHandler) mapCardToResponse(card *models.Card) dtos.CardResponse {
 	return dtos.CardResponse{
 		ID:                card.ID,
 		SenderID:          card.SenderID,
+		SenderName:        card.SenderName,
 		Recipients:        recipients,
 		RecognitionReason: card.RecognitionReason,
 		SelectedValues:    selectedValues,

@@ -13,6 +13,6 @@ export function isTokenValid(user: User | null): boolean {
   const now = Math.floor(Date.now() / 1000);
   const expiresAt = user.expires_at || 0;
 
-  // Consider token expired 5 minutes (300 seconds) before actual expiry
-  return expiresAt > now + 300;
+  // Consider token expired 1 minute (60 seconds) before actual expiry
+  return expiresAt > now + 60;
 }

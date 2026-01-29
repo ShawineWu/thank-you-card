@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/castlery/thank-you-card/internal/card/domain/models"
@@ -41,8 +42,26 @@ func (p *TeamsWebhookPublisher) PublishCardCreated(card *models.Card) error {
 		return nil
 	}
 
-	// For MVP, we'll send a simple JSON payload.
-	// In the future, this can be expanded to Adaptive Cards.
+	// Generate mentions and recipient text
+	recipientNames := make([]string, len(card.Recipients))
+	entities := make([]map[string]interface{}, len(card.Recipients))
+
+	for i, r := range card.Recipients {
+		mentionTag := fmt.Sprintf("<at>%s</at>", r.RecipientName)
+		recipientNames[i] = mentionTag
+
+		entities[i] = map[string]interface{}{
+			"type": "mention",
+			"text": mentionTag,
+			"mentioned": map[string]interface{}{
+				"id":   r.RecipientID, // Expected to be AAD Object ID
+				"name": r.RecipientName,
+			},
+		}
+	}
+
+	recipientText := strings.Join(recipientNames, ", ")
+
 	payload := map[string]interface{}{
 		"type": "message",
 		"attachments": []map[string]interface{}{
@@ -52,27 +71,78 @@ func (p *TeamsWebhookPublisher) PublishCardCreated(card *models.Card) error {
 					"type": "AdaptiveCard",
 					"body": []map[string]interface{}{
 						{
-							"type":   "TextBlock",
-							"size":   "Medium",
-							"weight": "Bolder",
-							"text":   "🎉 New Thank You Card!",
+							"type":  "Container",
+							"style": "emphasis", // Light grey background
+							"items": []map[string]interface{}{
+								{
+									"type": "ColumnSet",
+									"columns": []map[string]interface{}{
+										{
+											"type":  "Column",
+											"width": "auto",
+											"items": []map[string]interface{}{
+												{
+													"type":  "Image",
+													"url":   "https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Unicorn/3D/unicorn_3d.png",
+													"size":  "Medium",
+													"style": "Person",
+												},
+											},
+										},
+										{
+											"type":                     "Column",
+											"width":                    "stretch",
+											"verticalContentAlignment": "Center",
+											"items": []map[string]interface{}{
+												{
+													"type":   "TextBlock",
+													"text":   "Congratulations",
+													"size":   "Large",
+													"weight": "Bolder",
+													"color":  "Accent",
+												},
+												{
+													"type":   "TextBlock",
+													"text":   recipientText,
+													"size":   "Medium",
+													"weight": "Bolder",
+													"wrap":   true,
+												},
+											},
+										},
+									},
+								},
+								{
+									"type":    "TextBlock",
+									"text":    card.RecognitionReason,
+									"wrap":    true,
+									"size":    "Medium",
+									"spacing": "Medium",
+								},
+								{
+									"type":     "TextBlock",
+									"text":     fmt.Sprintf("From **%s**", card.SenderName),
+									"size":     "Small",
+									"isSubtle": true,
+									"spacing":  "Large",
+								},
+							},
+						},
+					},
+					"actions": []map[string]interface{}{
+						{
+							"type":  "Action.OpenUrl",
+							"title": "Review your praise history",
+							"url":   "https://teams.microsoft.com/l/entity/com.castlery.thankyou/thankyou-tab?context={\"subEntityId\":\"history\"}",
 						},
 						{
-							"type": "TextBlock",
-							"text": fmt.Sprintf("From: **%s**", card.SenderID),
-							"wrap": true,
+							"type":  "Action.OpenUrl",
+							"title": "Send praise",
+							"url":   "https://teams.microsoft.com/l/entity/com.castlery.thankyou/thankyou-tab?context={\"subEntityId\":\"create\"}",
 						},
-						{
-							"type": "TextBlock",
-							"text": fmt.Sprintf("To: **%s**", hmapRecipients(card.Recipients)),
-							"wrap": true,
-						},
-						{
-							"type":     "TextBlock",
-							"text":     card.RecognitionReason,
-							"wrap":     true,
-							"fontType": "Monospace",
-						},
+					},
+					"msteams": map[string]interface{}{
+						"entities": entities,
 					},
 					"$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
 					"version": "1.2",
@@ -106,15 +176,4 @@ func (p *TeamsWebhookPublisher) PublishCardCreated(card *models.Card) error {
 	}
 
 	return fmt.Errorf("failed to publish to Teams after 3 attempts: %w", lastErr)
-}
-
-func hmapRecipients(recipients []models.CardRecipient) string {
-	res := ""
-	for i, r := range recipients {
-		if i > 0 {
-			res += ", "
-		}
-		res += r.RecipientID
-	}
-	return res
 }

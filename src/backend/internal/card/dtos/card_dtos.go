@@ -8,19 +8,39 @@ import (
 
 // CreateCardRequest defines the payload for creating a new card
 type CreateCardRequest struct {
-	RecipientIDs      []string    `json:"recipientIds" binding:"required,min=1"`
-	RecognitionReason string      `json:"recognitionReason" binding:"required,min=10,max=1000"`
-	ValueIDs          []uuid.UUID `json:"valueIds" binding:"required,min=1,max=3"`
+	Recipients        []RecipientRequest `json:"recipients" binding:"required,min=1"`
+	RecognitionReason string             `json:"recognitionReason" binding:"required,min=10,max=1000"`
+	ValueIDs          []string           `json:"valueIds" binding:"required,min=1,max=3"`
+}
+
+type RecipientRequest struct {
+	ID   string `json:"id" binding:"required"`
+	Name string `json:"name" binding:"required"`
+}
+
+// EmployeeDTO represents an employee from the directory
+type EmployeeDTO struct {
+	ID         string `json:"id"`
+	AADID      string `json:"aadId"`
+	Name       string `json:"name"`
+	Email      string `json:"email"`
+	Department string `json:"department"`
 }
 
 // CardResponse represents the standardized card data in responses
 type CardResponse struct {
-	ID                uuid.UUID       `json:"id"`
-	SenderID          string          `json:"senderId"`
-	Recipients        []string        `json:"recipients"`
-	RecognitionReason string          `json:"recognitionReason"`
-	SelectedValues    []ValueResponse `json:"selectedValues"`
-	CreatedAt         time.Time       `json:"createdAt"`
+	ID                uuid.UUID           `json:"id"`
+	SenderID          string              `json:"senderId"`
+	SenderName        string              `json:"senderName"`
+	Recipients        []RecipientResponse `json:"recipients"`
+	RecognitionReason string              `json:"recognitionReason"`
+	SelectedValues    []ValueResponse     `json:"selectedValues"`
+	CreatedAt         time.Time           `json:"createdAt"`
+}
+
+type RecipientResponse struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 // ValueResponse represents a company value or credo in responses
@@ -35,6 +55,17 @@ type ValueResponse struct {
 type PaginationParams struct {
 	Page     int `form:"page,default=1" binding:"min=1"`
 	PageSize int `form:"pageSize,default=20" binding:"min=1,max=100"`
+}
+
+// CardFilterParams represents the query parameters for filtering cards
+type CardFilterParams struct {
+	PaginationParams
+	SenderID    string      `form:"senderId"`
+	RecipientID string      `form:"recipientId"`
+	ValueIDs    []uuid.UUID `form:"valueIds[]"`
+	StartDate   string      `form:"startDate"`
+	EndDate     string      `form:"endDate"`
+	Search      string      `form:"search"`
 }
 
 // PaginationResponse metadata for paginated results

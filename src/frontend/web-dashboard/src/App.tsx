@@ -1,7 +1,13 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { CallbackPage } from "./pages/Callback";
-import { HomePage } from "./pages/Home";
+import { Dashboard } from "./pages/Dashboard";
+import { MainLayout } from "./components/Layout/MainLayout";
+import { ReceivedCards } from "./pages/ReceivedCards";
+import { SentCards } from "./pages/SentCards";
+import { Stats } from "./pages/Stats";
+import { Settings } from "./pages/Settings";
+import { HRAnalytics } from "./pages/HRAnalytics";
 import "./App.css";
 
 function App() {
@@ -11,15 +17,23 @@ function App() {
         {/* OAuth callback route - no authentication required */}
         <Route path="/callback" element={<CallbackPage />} />
 
-        {/* Protected routes - authentication required */}
+        {/* Protected routes wrapped in MainLayout */}
         <Route
-          path="/*"
+          path="/"
           element={
             <ProtectedRoute>
-              <HomePage />
+              <MainLayout />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="received" element={<ReceivedCards />} />
+          <Route path="sent" element={<SentCards />} />
+          <Route path="stats" element={<Stats />} />
+          <Route path="analytics" element={<HRAnalytics />} />
+          <Route path="settings" element={<Settings />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

@@ -15,4 +15,9 @@ func RegisterCardRoutes(rg *gin.RouterGroup, h *handlers.CardHandler) {
 		cards.GET("/sent", h.GetSentCards)
 		cards.GET("/:id", h.GetCardByID)
 	}
+
+	employees := rg.Group("/employees")
+	{
+		employees.GET("/search", h.SearchEmployees)
+	}
 }

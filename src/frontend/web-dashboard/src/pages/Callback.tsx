@@ -18,14 +18,14 @@ export function CallbackPage() {
 
       // Redirect to the page user was trying to access
       const state = user?.state as { url?: string } | undefined;
-      const redirectUrl = state?.url || "/";
-      const url = new URL(redirectUrl);
+      const redirectUrl = state?.url || "/dashboard";
+      const url = new URL(redirectUrl, window.location.origin);
 
       // Avoid infinite redirect loop
       if (url.pathname !== "/callback") {
         navigate(url.pathname + url.search, { replace: true });
       } else {
-        navigate("/", { replace: true });
+        navigate("/dashboard", { replace: true });
       }
     } catch (error) {
       console.error("[Callback] Error processing callback:", error);
@@ -36,10 +36,10 @@ export function CallbackPage() {
         error.message === "No matching state found in storage"
       ) {
         // State mismatch, redirect to home
-        navigate("/", { replace: true });
+        navigate("/dashboard", { replace: true });
       } else {
         // Other errors, show error message or redirect to home
-        navigate("/", { replace: true });
+        navigate("/dashboard", { replace: true });
       }
     }
   };

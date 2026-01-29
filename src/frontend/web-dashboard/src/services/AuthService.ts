@@ -73,9 +73,19 @@ export class AuthService {
       return this.renewTokenPromise;
     }
 
-    this.renewTokenPromise = this.userManager.signinSilent().finally(() => {
-      this.renewTokenPromise = null;
-    });
+    const silentRenew = this.userManager.signinSilent();
+    const timeout = new Promise<null>((_, reject) =>
+      setTimeout(() => reject(new Error("Token renewal timed out")), 10000),
+    );
+
+    this.renewTokenPromise = Promise.race([silentRenew, timeout])
+      .then((user) => {
+        if (!user) return null;
+        return user as User;
+      })
+      .finally(() => {
+        this.renewTokenPromise = null;
+      });
 
     return this.renewTokenPromise;
   }
@@ -92,5 +102,12 @@ export class AuthService {
    */
   async logout(): Promise<void> {
     return this.userManager.signoutRedirect();
+  }
+
+  /**
+   * Clears the current user from storage
+   */
+  async clearUser(): Promise<void> {
+    return this.userManager.removeUser();
   }
 }

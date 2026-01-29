@@ -11,6 +11,7 @@ import (
 type Card struct {
 	ID                uuid.UUID       `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
 	SenderID          string          `gorm:"type:varchar(255);not null;index" json:"senderId"`
+	SenderName        string          `gorm:"type:varchar(255)" json:"senderName"`
 	RecognitionReason string          `gorm:"type:text;not null" json:"recognitionReason"`
 	Recipients        []CardRecipient `gorm:"foreignKey:CardID;constraint:OnDelete:CASCADE" json:"recipients"`
 	Values            []CardValue     `gorm:"foreignKey:CardID;constraint:OnDelete:CASCADE" json:"values"`
@@ -25,10 +26,11 @@ func (Card) TableName() string {
 
 // CardRecipient represents a recipient of a card (junction table)
 type CardRecipient struct {
-	ID          uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	CardID      uuid.UUID `gorm:"type:uuid;not null;index;uniqueIndex:idx_card_recipients_unique,priority:1" json:"cardId"`
-	RecipientID string    `gorm:"type:varchar(255);not null;index;uniqueIndex:idx_card_recipients_unique,priority:2" json:"recipientId"`
-	CreatedAt   time.Time `gorm:"not null" json:"createdAt"`
+	ID            uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	CardID        uuid.UUID `gorm:"type:uuid;not null;index;uniqueIndex:idx_card_recipients_unique,priority:1" json:"cardId"`
+	RecipientID   string    `gorm:"type:varchar(255);not null;index;uniqueIndex:idx_card_recipients_unique,priority:2" json:"recipientId"`
+	RecipientName string    `gorm:"type:varchar(255)" json:"recipientName"`
+	CreatedAt     time.Time `gorm:"not null" json:"createdAt"`
 }
 
 // TableName specifies the table name for CardRecipient
@@ -111,21 +113,23 @@ func (c *Card) Validate() error {
 }
 
 // NewCard creates a new Card instance with validation
-func NewCard(senderID string, recipientIDs []string, reason string, valueIDs []uuid.UUID) (*Card, error) {
+func NewCard(senderID, senderName string, recipients []map[string]string, reason string, valueIDs []uuid.UUID) (*Card, error) {
 	card := &Card{
 		SenderID:          senderID,
+		SenderName:        senderName,
 		RecognitionReason: reason,
-		Recipients:        make([]CardRecipient, 0, len(recipientIDs)),
+		Recipients:        make([]CardRecipient, 0, len(recipients)),
 		Values:            make([]CardValue, 0, len(valueIDs)),
 		CreatedAt:         time.Now().UTC(),
 		UpdatedAt:         time.Now().UTC(),
 	}
 
 	// Create recipients
-	for _, recipientID := range recipientIDs {
+	for _, r := range recipients {
 		card.Recipients = append(card.Recipients, CardRecipient{
-			RecipientID: recipientID,
-			CreatedAt:   time.Now().UTC(),
+			RecipientID:   r["id"],
+			RecipientName: r["name"],
+			CreatedAt:     time.Now().UTC(),
 		})
 	}
 

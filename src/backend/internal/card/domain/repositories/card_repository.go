@@ -23,11 +23,8 @@ type CardRepository interface {
 	// FindAll retrieves all cards (company-wide feed) with pagination
 	FindAll(page, pageSize int) ([]*models.Card, int64, error)
 
-	// FindByFilters retrieves cards matching filter criteria
-	FindByFilters(valueIDs []uuid.UUID, startDate, endDate *string, page, pageSize int) ([]*models.Card, int64, error)
-
-	// SearchByKeywords searches cards by keywords in recognition reason
-	SearchByKeywords(keywords string, page, pageSize int) ([]*models.Card, int64, error)
+	// FindWithFilters retrieves cards matching multiple filter criteria
+	FindWithFilters(senderID, recipientID string, valueIDs []uuid.UUID, startDate, endDate *string, search string, page, pageSize int) ([]*models.Card, int64, error)
 
 	// CountBySender counts cards sent by an employee
 	CountBySender(senderID string) (int64, error)

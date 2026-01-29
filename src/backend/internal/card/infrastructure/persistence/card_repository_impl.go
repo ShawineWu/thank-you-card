@@ -139,12 +139,25 @@ func (r *GormCardRepository) FindAll(page, pageSize int) ([]*models.Card, int64,
 	return cards, total, nil
 }
 
-// FindByFilters retrieves cards matching filter criteria
-func (r *GormCardRepository) FindByFilters(valueIDs []uuid.UUID, startDate, endDate *string, page, pageSize int) ([]*models.Card, int64, error) {
+// FindWithFilters retrieves cards matching multiple filter criteria
+func (r *GormCardRepository) FindWithFilters(senderID, recipientID string, valueIDs []uuid.UUID, startDate, endDate *string, search string, page, pageSize int) ([]*models.Card, int64, error) {
 	var cards []*models.Card
 	var total int64
 
 	query := r.db.Model(&models.Card{})
+
+	// Filter by sender if provided
+	if senderID != "" {
+		query = query.Where("sender_id = ?", senderID)
+	}
+
+	// Filter by recipient if provided
+	if recipientID != "" {
+		subQuery := r.db.Model(&models.CardRecipient{}).
+			Select("card_id").
+			Where("recipient_id = ?", recipientID)
+		query = query.Where("id IN (?)", subQuery)
+	}
 
 	// Filter by value IDs if provided
 	if len(valueIDs) > 0 {
@@ -155,11 +168,17 @@ func (r *GormCardRepository) FindByFilters(valueIDs []uuid.UUID, startDate, endD
 	}
 
 	// Filter by date range if provided
-	if startDate != nil {
+	if startDate != nil && *startDate != "" {
 		query = query.Where("created_at >= ?", *startDate)
 	}
-	if endDate != nil {
+	if endDate != nil && *endDate != "" {
 		query = query.Where("created_at <= ?", *endDate)
+	}
+
+	// Keyword search if provided
+	if search != "" {
+		searchPattern := "%" + search + "%"
+		query = query.Where("recognition_reason ILIKE ?", searchPattern)
 	}
 
 	// Count total
@@ -179,38 +198,6 @@ func (r *GormCardRepository) FindByFilters(valueIDs []uuid.UUID, startDate, endD
 
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to find filtered cards: %w", err)
-	}
-
-	return cards, total, nil
-}
-
-// SearchByKeywords searches cards by keywords in recognition reason
-func (r *GormCardRepository) SearchByKeywords(keywords string, page, pageSize int) ([]*models.Card, int64, error) {
-	var cards []*models.Card
-	var total int64
-
-	searchPattern := "%" + keywords + "%"
-
-	// Count total
-	if err := r.db.Model(&models.Card{}).
-		Where("recognition_reason ILIKE ?", searchPattern).
-		Count(&total).Error; err != nil {
-		return nil, 0, fmt.Errorf("failed to count searched cards: %w", err)
-	}
-
-	// Get paginated results
-	offset := (page - 1) * pageSize
-	err := r.db.
-		Preload("Recipients").
-		Preload("Values.CompanyValue").
-		Where("recognition_reason ILIKE ?", searchPattern).
-		Order("created_at DESC").
-		Limit(pageSize).
-		Offset(offset).
-		Find(&cards).Error
-
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to search cards: %w", err)
 	}
 
 	return cards, total, nil

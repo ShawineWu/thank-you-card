@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: thank-you-card-db
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=thankyoucard
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./src/backend/internal/shared/database/migrations:/docker-entrypoint-initdb.d
+
+volumes:
+  postgres_data:
