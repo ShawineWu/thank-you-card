@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/castlery/thank-you-card/internal/card/domain/models"
+	"github.com/castlery/thank-you-card/internal/models"
 )
 
 var DB *gorm.DB
@@ -37,12 +37,30 @@ func Initialize(config Config) error {
 		config.SSLMode,
 	)
 
-	// Configure GORM logger
+	// Log which database we are connecting to (no password)
+	log.Printf("Database: connecting to host=%s port=%s dbname=%s user=%s",
+		config.Host, config.Port, config.DBName, config.User)
+
+	logLevel := logger.Warn // Only log slow queries and errors; set to logger.Info for SQL dump
+	if lvl := os.Getenv("GORM_LOG_LEVEL"); lvl != "" {
+		switch lvl {
+		case "silent":
+			logLevel = logger.Silent
+		case "error":
+			logLevel = logger.Error
+		case "warn":
+			logLevel = logger.Warn
+		case "info":
+			logLevel = logger.Info
+		}
+	}
+
+	// Configure GORM logger (default Warn to avoid flooding console during AutoMigrate)
 	gormLogger := logger.New(
 		log.New(os.Stdout, "\r\n", log.LstdFlags),
 		logger.Config{
 			SlowThreshold:             time.Second,
-			LogLevel:                  logger.Info,
+			LogLevel:                  logLevel,
 			IgnoreRecordNotFoundError: true,
 			Colorful:                  true,
 		},
@@ -71,17 +89,6 @@ func Initialize(config Config) error {
 	sqlDB.SetConnMaxLifetime(time.Hour)
 
 	DB = db
-	log.Println("Database connection established successfully")
-
-	// Diagnostics: Check current database and tables
-	var dbName string
-	db.Raw("SELECT current_database()").Scan(&dbName)
-	log.Printf("Connected to database: %s", dbName)
-
-	var tables []string
-	db.Raw("SELECT tablename FROM pg_tables WHERE schemaname = 'public'").Scan(&tables)
-	log.Printf("Tables in public schema: %v", tables)
-
 	return nil
 }
 

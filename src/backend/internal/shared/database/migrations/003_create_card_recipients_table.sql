@@ -1,7 +1,7 @@
 -- Create card_recipients junction table for many-to-many relationship
 CREATE TABLE IF NOT EXISTS card_recipients (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    card_id UUID NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
+    card_id UUID NOT NULL,
     recipient_id VARCHAR(255) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );

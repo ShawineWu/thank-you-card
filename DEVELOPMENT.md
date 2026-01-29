@@ -31,20 +31,38 @@ make up
 > **Note**: The database is automatically seeded with tables via the mounted migration scripts.
 
 ### 3. Start Application Services
-You can run the backend and frontend in separate terminals.
+
+**Option A: One-shot (single terminal)**  
+Start backend and frontend together:
+```bash
+make dev
+```
+> Runs Card Service (`:8080`), Analytics Service (`:8081`), Teams App (`:5173`), and Web Dashboard (`:3000`). Ensure `.env` is configured and the database is running.
+
+**Option B: Separate terminals**
 
 **Terminal 1: Backend**
 ```bash
 make dev-backend
 ```
 > Runs Card Service (`:8080`) and Analytics Service (`:8081`).
-> Ensure you have configured your `.env` file first (see below).
 
 **Terminal 2: Frontend**
 ```bash
 make dev-frontend
 ```
 > Runs Teams App (`:5173`) and Web Dashboard (`:3000`).
+
+---
+
+## 🖥 Local development without Docker
+
+If you use your own local database (no Docker), configure `src/backend/.env` with your connection (e.g. `localhost:5432`), then start the app:
+
+```bash
+make dev
+```
+> Backend and frontend run in one terminal; stop with Ctrl+C.
 
 ---
 

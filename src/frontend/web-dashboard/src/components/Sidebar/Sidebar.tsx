@@ -7,6 +7,7 @@ import {
   BarChart3,
   Settings,
   Heart,
+  Award,
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 
@@ -19,6 +20,7 @@ export const Sidebar: React.FC = () => {
     },
     { icon: <Inbox size={20} />, label: "Received Cards", path: "/received" },
     { icon: <Send size={20} />, label: "Sent Cards", path: "/sent" },
+    { icon: <Award size={20} />, label: "Company Values", path: "/values" },
     { icon: <BarChart3 size={20} />, label: "Statistics", path: "/stats" },
     {
       icon: <BarChart3 size={20} />,

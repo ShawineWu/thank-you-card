@@ -1,8 +1,8 @@
 -- Create card_values junction table for card-value associations
 CREATE TABLE IF NOT EXISTS card_values (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    card_id UUID NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
-    value_id UUID NOT NULL REFERENCES company_values(id),
+    card_id UUID NOT NULL,
+    value_id UUID NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
