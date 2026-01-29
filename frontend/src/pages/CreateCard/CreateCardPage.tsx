@@ -169,20 +169,12 @@ const CreateCardPage = () => {
                 <div className="flex items-center space-x-2">
                   <label className="text-xs text-muted-foreground">Language:</label>
                   <Select value={language} onValueChange={setLanguage}>
-                    <SelectTrigger className="w-[140px] h-8 text-xs">
+                    <SelectTrigger className="w-[120px] h-8 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="en">English</SelectItem>
                       <SelectItem value="zh">中文</SelectItem>
-                      <SelectItem value="ja">日本語</SelectItem>
-                      <SelectItem value="ko">한국어</SelectItem>
-                      <SelectItem value="fr">Français</SelectItem>
-                      <SelectItem value="de">Deutsch</SelectItem>
-                      <SelectItem value="es">Español</SelectItem>
-                      <SelectItem value="pt">Português</SelectItem>
-                      <SelectItem value="it">Italiano</SelectItem>
-                      <SelectItem value="ru">Русский</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

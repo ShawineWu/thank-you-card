@@ -6,7 +6,7 @@ export interface GenerateTextRequest {
   senderDepartment?: string;
   userInput: string;
   valueNames: string[];
-  language?: string; // Language code: "en" (English, default), "zh" (中文), "ja" (日本語), "ko" (한국어), "fr" (Français), "de" (Deutsch), "es" (Español), "pt" (Português), "it" (Italiano), "ru" (Русский)
+  language?: string; // "zh" for Chinese, "en" for English (default)
 }
 
 export interface GenerateTextResponse {
