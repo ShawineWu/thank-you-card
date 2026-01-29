@@ -19,6 +19,13 @@ build/
 *.so
 *.dylib
 
+# Generated binaries (Go build output, etc.)
+/main
+/server
+src/backend/main
+src/backend/server
+*.bin
+
 # Testing
 coverage/
 *.test

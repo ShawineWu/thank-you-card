@@ -35,18 +35,15 @@ logs:
 dev:
 	@echo "Starting all services (backend + frontend)..."
 	@echo "Ensure your database is running and .env is configured."
-	(cd src/backend && go run cmd/card-service/main.go) & \
-	(cd src/backend && go run cmd/analytics-service/main.go) & \
+	(cd src/backend && go run cmd/server/main.go) & \
 	(cd src/frontend/teams-app && pnpm dev) & \
 	(cd src/frontend/web-dashboard && pnpm dev) & \
 	wait
 
 dev-backend:
-	@echo "Starting Backend Services..."
+	@echo "Starting Backend Service..."
 	@echo "Ensure your database is running and .env is configured."
-	(cd src/backend && go run cmd/card-service/main.go) & \
-	(cd src/backend && go run cmd/analytics-service/main.go) & \
-	wait
+	cd src/backend && go run cmd/server/main.go
 
 dev-frontend:
 	@echo "Starting Frontend Services..."
