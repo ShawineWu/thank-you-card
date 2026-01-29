@@ -1,15 +1,16 @@
-.PHONY: up down restart logs install dev-backend dev-frontend help
+.PHONY: up down restart logs install dev dev-backend dev-frontend help
 
 # Default target
 help:
 	@echo "Available commands:"
 	@echo "  make install       - Install dependencies for all projects"
-	@echo "  make up            - Start database (and other docker services) in background"
+	@echo "  make up            - Start database (Docker) in background"
 	@echo "  make down          - Stop all docker services"
 	@echo "  make restart       - Restart all docker services"
 	@echo "  make logs          - View database logs"
-	@echo "  make dev-backend   - Run backend services (requires 'make up' first)"
-	@echo "  make dev-frontend  - Run frontend services"
+	@echo "  make dev           - One-shot: start backend + frontend (DB must be running)"
+	@echo "  make dev-backend   - Run backend services only"
+	@echo "  make dev-frontend  - Run frontend services only"
 	@echo "  make clean         - Remove project temporary files and build artifacts"
 
 install:
@@ -31,11 +32,20 @@ restart: down up
 logs:
 	docker-compose logs -f
 
+dev:
+	@echo "Starting all services (backend + frontend)..."
+	@echo "Ensure your database is running and .env is configured."
+	(cd src/backend && go run cmd/card-service/main.go) & \
+	(cd src/backend && go run cmd/analytics-service/main.go) & \
+	(cd src/frontend/teams-app && pnpm dev) & \
+	(cd src/frontend/web-dashboard && pnpm dev) & \
+	wait
+
 dev-backend:
 	@echo "Starting Backend Services..."
-	@echo "Ensure you have run 'make up' to start the database."
-	cd src/backend && go run cmd/card-service/main.go & \
-	go run cmd/analytics-service/main.go & \
+	@echo "Ensure your database is running and .env is configured."
+	(cd src/backend && go run cmd/card-service/main.go) & \
+	(cd src/backend && go run cmd/analytics-service/main.go) & \
 	wait
 
 dev-frontend:

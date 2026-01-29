@@ -1,0 +1,21 @@
+# Server Configuration
+SERVER_PORT=8080
+GIN_MODE=debug
+
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=5436
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_NAME=thankyoucardv2
+DB_SSLMODE=disable
+
+# Auth Configuration
+JWT_SECRET=super-secret-key-for-local-dev
+TOKEN_ISSUER=https://hydra-test.castlery.com
+TOKEN_AUDIENCE=api://thank-you-card-api
+
+# External Services
+EMPLOYEE_DIRECTORY_URL=https://employee-directory-api.castlery.com
+TEAMS_WEBHOOK_URL=https://default16e5d7fd380a49609abb0fee021c94.d6.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/7df95c5ec6ad49d4b6d4309d2fd1abd3/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=ZK-ONgiiC1cXRfC6LwN2rSMr12t4ZEGOtwywoEoQkJc
+PLAT_UMS_URL=https://plat-ums-api-test.cslr.io
