@@ -42,8 +42,9 @@ type ValueUsage struct {
 
 // TopRecognizer represents an employee and their sent card count
 type TopRecognizer struct {
-	EmployeeID string
-	CardsSent  int64
+	EmployeeID   string
+	EmployeeName string
+	CardsSent    int64
 }
 
 // TeamStats represents team-level recognition statistics
@@ -59,7 +60,9 @@ type TeamStats struct {
 type ExportCard struct {
 	ID                string
 	SenderID          string
-	Recipients        string // Comma-separated
+	SenderName        string
+	Recipients        string // Comma-separated IDs
+	RecipientNames    string // Comma-separated names
 	RecognitionReason string
 	Values            string // Comma-separated value names
 	CreatedAt         time.Time

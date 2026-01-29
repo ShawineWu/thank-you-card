@@ -89,6 +89,7 @@ func (h *StatisticsHandler) GetTopRecipients(c *gin.Context) {
 	for i, r := range topRecipients {
 		topDTOs[i] = dtos.TopEmployeeStat{
 			EmployeeID:    r.EmployeeID,
+			EmployeeName:  r.EmployeeName,
 			CardsReceived: r.Count,
 			Rank:          i + 1,
 		}

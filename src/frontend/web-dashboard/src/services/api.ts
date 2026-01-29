@@ -20,6 +20,7 @@ export interface UserStats {
 
 export interface TopEmployee {
   employeeId: string;
+  employeeName: string;
   cardsReceived: number;
   rank: number;
 }
@@ -102,6 +103,7 @@ export interface DashboardAnalytics {
 
 export interface TopRecognizer {
   employeeId: string;
+  employeeName: string;
   cardsSent: number;
   rank: number;
 }

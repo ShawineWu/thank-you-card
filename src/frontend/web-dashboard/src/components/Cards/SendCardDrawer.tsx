@@ -12,8 +12,9 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { api, type Employee, type ValueResponse } from "@/services/api";
 import { useAuthStore } from "@/store/authStore";
-import { X, Search, Loader2, Send, Sparkles } from "lucide-react";
+import { X, Search, Loader2, Send, Sparkles, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getValueColor } from "@/constants/valueColors";
 
 interface SendCardDrawerProps {
   open: boolean;
@@ -365,45 +366,103 @@ export const SendCardDrawer: React.FC<SendCardDrawerProps> = ({
               )}
             </div>
 
-            {/* Company Values */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Company Values <span className="text-red-500">*</span>
-              </label>
+            {/* Company Values & Credos */}
+            <div className="space-y-4">
               {loadingValues ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Loading values...
                 </div>
               ) : (
-                <div className="flex flex-wrap gap-2">
-                  {values.map((value) => {
-                    const isSelected = selectedValueIds.includes(value.id);
-                    const isDisabled =
-                      !isSelected && selectedValueIds.length >= 3;
+                <>
+                  {/* Credo Section */}
+                  {values.filter(v => v.type === 'Credo').length > 0 && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">
+                        Credo <span className="text-red-500">*</span>
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {values.filter(v => v.type === 'Credo').map((value) => {
+                          const isSelected = selectedValueIds.includes(value.id);
+                          const isDisabled = !isSelected && selectedValueIds.length >= 3;
+                          const color = getValueColor(value.name);
 
-                    return (
-                      <button
-                        key={value.id}
-                        type="button"
-                        onClick={() => handleToggleValue(value.id)}
-                        disabled={isDisabled}
-                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                          isSelected
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                        } ${
-                          isDisabled
-                            ? "opacity-50 cursor-not-allowed"
-                            : "cursor-pointer"
-                        }`}
-                        title={value.description}
-                      >
-                        {value.name}
-                      </button>
-                    );
-                  })}
-                </div>
+                          return (
+                            <div key={value.id} className="relative group">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleValue(value.id)}
+                                disabled={isDisabled}
+                                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all border-2 flex items-center gap-1.5 ${
+                                  isSelected
+                                    ? `${color.bg} ${color.text} border-current ring-2 ring-current ring-offset-1`
+                                    : `${color.bg} ${color.text} border-transparent ${color.bgHover}`
+                                } ${
+                                  isDisabled
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : "cursor-pointer"
+                                }`}
+                              >
+                                {isSelected && <Check className="h-4 w-4" />}
+                                {value.name}
+                              </button>
+                              {/* Tooltip */}
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-popover border rounded-md shadow-lg text-sm w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[9999] pointer-events-none">
+                                <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-gray-200"></div>
+                                <div className="absolute -top-[6px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-b-[6px] border-l-transparent border-r-transparent border-b-[hsl(var(--popover))]"></div>
+                                <p className="text-foreground">{value.description}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Value Section */}
+                  {values.filter(v => v.type === 'Value').length > 0 && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">
+                        Value {values.filter(v => v.type === 'Credo').length === 0 && <span className="text-red-500">*</span>}
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {values.filter(v => v.type === 'Value').map((value) => {
+                          const isSelected = selectedValueIds.includes(value.id);
+                          const isDisabled = !isSelected && selectedValueIds.length >= 3;
+                          const color = getValueColor(value.name);
+
+                          return (
+                            <div key={value.id} className="relative group">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleValue(value.id)}
+                                disabled={isDisabled}
+                                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all border-2 flex items-center gap-1.5 ${
+                                  isSelected
+                                    ? `${color.bg} ${color.text} border-current ring-2 ring-current ring-offset-1`
+                                    : `${color.bg} ${color.text} border-transparent ${color.bgHover}`
+                                } ${
+                                  isDisabled
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : "cursor-pointer"
+                                }`}
+                              >
+                                {isSelected && <Check className="h-4 w-4" />}
+                                {value.name}
+                              </button>
+                              {/* Tooltip */}
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-popover border rounded-md shadow-lg text-sm w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[9999] pointer-events-none">
+                                <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-gray-200"></div>
+                                <div className="absolute -top-[6px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-b-[6px] border-l-transparent border-r-transparent border-b-[hsl(var(--popover))]"></div>
+                                <p className="text-foreground">{value.description}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
               <div className="flex justify-between">
                 <p className="text-xs text-muted-foreground">

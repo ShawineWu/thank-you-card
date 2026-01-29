@@ -27,9 +27,10 @@ type TrendResponse struct {
 
 // TopRecognizerResponse represents a top recognizer
 type TopRecognizerResponse struct {
-	EmployeeID string `json:"employeeId"`
-	CardsSent  int64  `json:"cardsSent"`
-	Rank       int    `json:"rank"`
+	EmployeeID   string `json:"employeeId"`
+	EmployeeName string `json:"employeeName"`
+	CardsSent    int64  `json:"cardsSent"`
+	Rank         int    `json:"rank"`
 }
 
 // TeamAnalyticsResponse contains team-level recognition data

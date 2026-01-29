@@ -9,6 +9,7 @@ import {
 import type { SelectTabData, SelectTabEvent } from "@fluentui/react-components";
 import type { CompanyValue, Recipient } from "../types";
 import { useDebounce } from "../hooks/useDebounce";
+import { getValueColor } from "../constants/valueColors";
 import "../styles/animations.css";
 
 const useStyles = makeStyles({
@@ -319,17 +320,23 @@ export const CardPreview: React.FC<CardPreviewProps> = ({
 
                 {debouncedValues.length > 0 && (
                   <div className={styles.valuesContainer}>
-                    {debouncedValues.map((v, index) => (
-                      <span 
-                        key={v.id} 
-                        className={`${styles.valueTag} ${highlightValues ? styles.highlight : ''}`}
-                        style={{
-                          animationDelay: `${index * 50}ms`,
-                        }}
-                      >
-                        {v.name}
-                      </span>
-                    ))}
+                    {debouncedValues.map((v, index) => {
+                      const colorConfig = getValueColor(v.name);
+                      return (
+                        <span 
+                          key={v.id} 
+                          className={`${styles.valueTag} ${highlightValues ? styles.highlight : ''}`}
+                          style={{
+                            animationDelay: `${index * 50}ms`,
+                            backgroundColor: colorConfig.bgCss,
+                            color: colorConfig.textCss,
+                            border: `1px solid ${colorConfig.borderCss}`,
+                          }}
+                        >
+                          {v.name}
+                        </span>
+                      );
+                    })}
                   </div>
                 )}
               </div>

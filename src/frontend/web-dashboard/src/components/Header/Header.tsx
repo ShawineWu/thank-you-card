@@ -1,14 +1,26 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { LogOut, Bell, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { SendCardDrawer } from "@/components/Cards/SendCardDrawer";
 import { initConfigProcess } from "@/app";
+import { useSearchParams } from "react-router-dom";
 
 export const Header: React.FC = () => {
   const { user } = useAuthStore();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Handle action=send-card from URL
+  useEffect(() => {
+    if (searchParams.get("action") === "send-card") {
+      setDrawerOpen(true);
+      // Remove the action param from URL after opening
+      searchParams.delete("action");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
   const userName =
     user?.profile.name || user?.profile.preferred_username || "User";
 

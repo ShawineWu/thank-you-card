@@ -151,6 +151,7 @@ type MilestoneResponse struct {
 // TopEmployeeStat represents an employee in the Top 10 list
 type TopEmployeeStat struct {
 	EmployeeID    string `json:"employeeId"`
+	EmployeeName  string `json:"employeeName"`
 	CardsReceived int64  `json:"cardsReceived"`
 	Rank          int    `json:"rank"`
 }

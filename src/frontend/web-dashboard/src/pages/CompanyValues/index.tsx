@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { api, type ValueResponse } from "@/services/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,10 +11,12 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Eye } from "lucide-react";
+import { getValueBadgeClasses } from "@/constants/valueColors";
 
 type FilterType = "all" | "value" | "credo";
 
 export const CompanyValues: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [values, setValues] = useState<ValueResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [detailValue, setDetailValue] = useState<ValueResponse | null>(null);
@@ -35,6 +38,18 @@ export const CompanyValues: React.FC = () => {
     fetchValues();
   }, []);
 
+  // Open modal when id query param is present and values are loaded
+  useEffect(() => {
+    const valueId = searchParams.get("id");
+    if (valueId && values.length > 0 && !loading) {
+      const targetValue = values.find((v) => v.id === valueId);
+      if (targetValue) {
+        setDetailValue(targetValue);
+        setDetailOpen(true);
+      }
+    }
+  }, [searchParams, values, loading]);
+
   const valueItems = values.filter((v) => v.type === "Value");
   const credoItems = values.filter((v) => v.type === "Credo");
 
@@ -48,6 +63,15 @@ export const CompanyValues: React.FC = () => {
   const openDetails = (v: ValueResponse) => {
     setDetailValue(v);
     setDetailOpen(true);
+  };
+
+  const handleDialogClose = (open: boolean) => {
+    setDetailOpen(open);
+    // Clear the id param when closing the modal
+    if (!open && searchParams.has("id")) {
+      searchParams.delete("id");
+      setSearchParams(searchParams, { replace: true });
+    }
   };
 
   const TabButton: React.FC<{
@@ -75,12 +99,7 @@ export const CompanyValues: React.FC = () => {
       <div className="flex items-start justify-between gap-3 mb-3">
         <h3 className="font-semibold text-base">{item.name}</h3>
         <Badge
-          variant="outline"
-          className={`shrink-0 text-xs ${
-            item.type === "Credo"
-              ? "bg-green-500 text-white border-green-500"
-              : "bg-blue-500 text-white border-blue-500"
-          }`}
+          className={`shrink-0 text-xs border ${getValueBadgeClasses(item.name)}`}
         >
           {item.type.toUpperCase()}
         </Badge>
@@ -160,19 +179,14 @@ export const CompanyValues: React.FC = () => {
       )}
 
       {/* Detail Dialog */}
-      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+      <Dialog open={detailOpen} onOpenChange={handleDialogClose}>
         <DialogContent className="max-w-md sm:max-w-lg">
           <DialogHeader>
             <div className="flex items-center gap-3">
               <DialogTitle>{detailValue?.name}</DialogTitle>
               {detailValue && (
                 <Badge
-                  variant="outline"
-                  className={`text-xs ${
-                    detailValue.type === "Credo"
-                      ? "bg-green-500 text-white border-green-500"
-                      : "bg-blue-500 text-white border-blue-500"
-                  }`}
+                  className={`text-xs border ${getValueBadgeClasses(detailValue.name)}`}
                 >
                   {detailValue.type.toUpperCase()}
                 </Badge>

@@ -14,7 +14,7 @@ func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Development mode: skip authentication
 		if gin.Mode() == gin.DebugMode {
-			// Set mock user for development
+			// Set mock user for development - use Azure AD ID for Graph API validation
 			c.Set("userId", "d3dc438c-1de2-49dc-ae8b-8dffb7fcb2cc")
 			c.Set("userName", "Youshan Li (SZX)")
 			c.Set("userEmail", "youshan.li@castlery.com")

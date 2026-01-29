@@ -90,9 +90,10 @@ func (r *GormAnalyticsRepository) GetTopRecognizers(limit int) ([]TopRecognizer,
 	query := `
 		SELECT 
 			sender_id as employee_id,
+			sender_name as employee_name,
 			COUNT(*) as cards_sent
 		FROM cards
-		GROUP BY sender_id
+		GROUP BY sender_id, sender_name
 		ORDER BY cards_sent DESC
 		LIMIT ?
 	`
@@ -143,12 +144,13 @@ func (r *GormAnalyticsRepository) GetCardsForExport(startDate, endDate time.Time
 	var cards []struct {
 		ID                string
 		SenderID          string
+		SenderName        string
 		RecognitionReason string
 		CreatedAt         time.Time
 	}
 
 	err := r.db.Table("cards").
-		Select("id, sender_id, recognition_reason, created_at").
+		Select("id, sender_id, sender_name, recognition_reason, created_at").
 		Where("created_at >= ? AND created_at <= ?", startDate, endDate).
 		Order("created_at DESC").
 		Find(&cards).Error
@@ -160,14 +162,24 @@ func (r *GormAnalyticsRepository) GetCardsForExport(startDate, endDate time.Time
 	// Enrich with recipients and values
 	exportCards := make([]ExportCard, len(cards))
 	for i, card := range cards {
-		// Get recipients
-		var recipients []string
+		// Get recipients (IDs and names)
+		var recipients []struct {
+			RecipientID   string
+			RecipientName string
+		}
 		err := r.db.Table("card_recipients").
-			Select("recipient_id").
+			Select("recipient_id, recipient_name").
 			Where("card_id = ?", card.ID).
-			Pluck("recipient_id", &recipients).Error
+			Find(&recipients).Error
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch recipients: %w", err)
+		}
+
+		recipientIDs := make([]string, len(recipients))
+		recipientNames := make([]string, len(recipients))
+		for j, r := range recipients {
+			recipientIDs[j] = r.RecipientID
+			recipientNames[j] = r.RecipientName
 		}
 
 		// Get values
@@ -186,7 +198,9 @@ func (r *GormAnalyticsRepository) GetCardsForExport(startDate, endDate time.Time
 		exportCards[i] = ExportCard{
 			ID:                card.ID,
 			SenderID:          card.SenderID,
-			Recipients:        strings.Join(recipients, "; "),
+			SenderName:        card.SenderName,
+			Recipients:        strings.Join(recipientIDs, "; "),
+			RecipientNames:    strings.Join(recipientNames, "; "),
 			RecognitionReason: card.RecognitionReason,
 			Values:            strings.Join(values, "; "),
 			CreatedAt:         card.CreatedAt,

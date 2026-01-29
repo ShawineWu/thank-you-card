@@ -14,12 +14,16 @@ class AuthorizedAxios {
   constructor() {
     this.axiosInstance = axios.create({
       timeout: 30000,
-      baseURL: typeof API_BASE_URL !== "undefined" ? API_BASE_URL : undefined,
     });
 
-    // Request interceptor - add Authorization header
+    // Request interceptor - add Authorization header and baseURL
     this.axiosInstance.interceptors.request.use(
       async (config: InternalAxiosRequestConfig) => {
+        // Set baseURL from config (loaded asynchronously)
+        if (!config.baseURL && typeof API_BASE_URL !== "undefined") {
+          config.baseURL = API_BASE_URL;
+        }
+
         const auth = await initConfigProcess;
         const user = await auth.getUser();
 

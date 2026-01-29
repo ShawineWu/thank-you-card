@@ -130,11 +130,9 @@ export const CardForm: React.FC = () => {
     try {
       microsoftTeams.app.initialize().then(() => {
         microsoftTeams.app.getContext().then((context) => {
-          // If we are in a task module or compose extension
-          if (
-            context.page.frameContext === "task" ||
-            context.page.frameContext === "content"
-          ) {
+          // Only set isInTeamsTask for actual task module (message extension popup)
+          // "content" is too broad - it includes regular tab content
+          if (context.page.frameContext === "task") {
             setIsInTeamsTask(true);
           }
         });
@@ -234,7 +232,7 @@ export const CardForm: React.FC = () => {
         // If running in a Teams Task Module (Message Extension), submit the task
         // This will close the popup and pass the data back to our Bot backend
         if (isInTeamsTask) {
-          setLoading(true); // Keep loading while closing
+          // Keep loading while closing, then submit task
           setTimeout(() => {
             microsoftTeams.tasks.submitTask({
               data: {
@@ -246,6 +244,9 @@ export const CardForm: React.FC = () => {
           return;
         }
 
+        // Not in Teams Task Module - reset loading and form
+        setLoading(false);
+        
         // Reset form after a short delay to let user see the success message
         setTimeout(() => {
           resetFormWithAnimation();
@@ -257,10 +258,7 @@ export const CardForm: React.FC = () => {
           retryable: true,
           operation: submitCard,
         });
-      } finally {
-        if (!isInTeamsTask) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     };
 
@@ -399,13 +397,13 @@ export const CardForm: React.FC = () => {
         <Text as="h1" size={900} weight="bold">
           Send Recognition Card
         </Text>
-        <Text
+        {/* <Text
           as="p"
           size={300}
           style={{ color: tokens.colorNeutralForeground3 }}
         >
           Appreciate your colleagues and celebrate our company values
-        </Text>
+        </Text> */}
       </div>
 
       {successMessage && (

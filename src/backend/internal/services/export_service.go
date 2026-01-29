@@ -5,9 +5,10 @@ import (
 	"encoding/csv"
 	"fmt"
 
+	"time"
+
 	"github.com/castlery/thank-you-card/internal/dtos"
 	"github.com/castlery/thank-you-card/internal/repositories"
-	"time"
 )
 
 // ExportService handles data export operations
@@ -35,7 +36,7 @@ func (s *ExportService) ExportToCSV(filters dtos.ExportFilters) (*bytes.Buffer, 
 	writer := csv.NewWriter(buf)
 
 	// Write header
-	header := []string{"Card ID", "Sender ID", "Recipients", "Recognition Reason", "Values", "Created At"}
+	header := []string{"Card ID", "Sender ID", "Sender Name", "Recipient IDs", "Recipient Names", "Recognition Reason", "Values", "Created At"}
 	if err := writer.Write(header); err != nil {
 		return nil, fmt.Errorf("failed to write CSV header: %w", err)
 	}
@@ -45,7 +46,9 @@ func (s *ExportService) ExportToCSV(filters dtos.ExportFilters) (*bytes.Buffer, 
 		row := []string{
 			card.ID,
 			card.SenderID,
+			card.SenderName,
 			card.Recipients,
+			card.RecipientNames,
 			card.RecognitionReason,
 			card.Values,
 			card.CreatedAt.Format(time.RFC3339),

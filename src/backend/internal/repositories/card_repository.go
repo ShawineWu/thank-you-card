@@ -41,8 +41,9 @@ type CardRepository interface {
 
 // TopRecipient represents an employee and their received card count
 type TopRecipient struct {
-	EmployeeID string
-	Count      int64
+	EmployeeID   string
+	EmployeeName string
+	Count        int64
 }
 
 // ValueStat represents a company value and its usage count for a user

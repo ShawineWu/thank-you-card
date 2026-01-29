@@ -23,6 +23,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { CardDetail } from "./CardDetail";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getValueBadgeClasses } from "@/constants/valueColors";
 
 interface CardListProps {
   data: PaginatedResponse<CardType> | null;
@@ -102,34 +103,34 @@ export const CardList: React.FC<CardListProps> = ({
                     <div className="flex items-center gap-2">
                       <Avatar className="h-7 w-7 border border-gray-200">
                         <AvatarFallback className="text-[10px] bg-indigo-50 text-indigo-600">
-                          {getInitials(card.senderId)}
+                          {getInitials(card.senderName || card.senderId)}
                         </AvatarFallback>
                       </Avatar>
                       <span className="text-sm font-medium text-gray-700">
-                        {card.senderId}
+                        {card.senderName || card.senderId}
                       </span>
                     </div>
                   </TableCell>
                 )}
                 {showRecipient && (
                   <TableCell>
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-col gap-1">
                       {card.recipients.slice(0, 2).map((r) => (
-                        <Badge
-                          key={r.id}
-                          variant="outline"
-                          className="text-[10px] py-0 px-2 border-gray-200 bg-gray-50 text-gray-600"
-                        >
-                          {r.name}
-                        </Badge>
+                        <div key={r.id} className="flex items-center gap-2">
+                          <Avatar className="h-7 w-7 border border-gray-200">
+                            <AvatarFallback className="text-[10px] bg-pink-50 text-pink-600">
+                              {getInitials(r.name || r.id)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm font-medium text-gray-700">
+                            {r.name}
+                          </span>
+                        </div>
                       ))}
                       {card.recipients.length > 2 && (
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] py-0 px-2 border-gray-200 text-gray-500"
-                        >
-                          +{card.recipients.length - 2}
-                        </Badge>
+                        <span className="text-xs text-gray-400 ml-9">
+                          +{card.recipients.length - 2} more
+                        </span>
                       )}
                     </div>
                   </TableCell>
@@ -144,7 +145,7 @@ export const CardList: React.FC<CardListProps> = ({
                     {card.selectedValues.slice(0, 1).map((v) => (
                       <Badge
                         key={v.id}
-                        className="bg-indigo-50 text-indigo-600 border-none text-[10px] px-2 font-medium"
+                        className={`border-none text-[10px] px-2 font-medium ${getValueBadgeClasses(v.name)}`}
                       >
                         {v.name}
                       </Badge>

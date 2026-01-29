@@ -13,6 +13,44 @@ import (
 	"github.com/castlery/thank-you-card/internal/services"
 )
 
+// ValueColorConfig holds color configuration for a company value
+type ValueColorConfig struct {
+	BgColor   string // Background color hex
+	TextColor string // Text color hex
+}
+
+// valueColorMap maps value names to their colors (matching frontend valueColors.ts)
+var valueColorMap = map[string]ValueColorConfig{
+	// Values (5)
+	"Make an Impact":        {BgColor: "#ede9fe", TextColor: "#6d28d9"},
+	"Strive for Excellence": {BgColor: "#fef3c7", TextColor: "#b45309"},
+	"Stand Together":        {BgColor: "#d1fae5", TextColor: "#047857"},
+	"Be Open-Minded":        {BgColor: "#e0f2fe", TextColor: "#0369a1"},
+	"Stay Grounded":         {BgColor: "#ffe4e6", TextColor: "#be123c"},
+	// Credos (10)
+	"Bias for Action":               {BgColor: "#ffedd5", TextColor: "#c2410c"},
+	"Customer Centric":              {BgColor: "#fce7f3", TextColor: "#be185d"},
+	"Think Strategically":           {BgColor: "#e0e7ff", TextColor: "#4338ca"},
+	"Deep Dive":                     {BgColor: "#cffafe", TextColor: "#0e7490"},
+	"Invent and Simplify":           {BgColor: "#ccfbf1", TextColor: "#0f766e"},
+	"Earn Trust":                    {BgColor: "#dbeafe", TextColor: "#1d4ed8"},
+	"Take Ownership":                {BgColor: "#f3e8ff", TextColor: "#7e22ce"},
+	"Challenge Disagree and Commit": {BgColor: "#fee2e2", TextColor: "#b91c1c"},
+	"Learn and Be Curious":          {BgColor: "#ecfccb", TextColor: "#4d7c0f"},
+	"Do More with Less":             {BgColor: "#fae8ff", TextColor: "#a21caf"},
+}
+
+// Default color for unknown values
+var defaultValueColor = ValueColorConfig{BgColor: "#f3f4f6", TextColor: "#374151"}
+
+// getValueColor returns the color config for a value name
+func getValueColor(valueName string) ValueColorConfig {
+	if color, ok := valueColorMap[valueName]; ok {
+		return color
+	}
+	return defaultValueColor
+}
+
 // TeamsWebhookPublisher implements EventPublisher using HTTP webhooks
 type TeamsWebhookPublisher struct {
 	webhookURL string
@@ -31,13 +69,20 @@ func NewTeamsWebhookPublisher(webhookURL string, enabled bool) services.EventPub
 	}
 }
 
-// PublishCardCreated sends a notification to Teams via webhook
+// PublishCardCreated sends a notification to Teams via webhook asynchronously
 func (p *TeamsWebhookPublisher) PublishCardCreated(card *models.Card) error {
 	if !p.enabled || p.webhookURL == "" {
 		log.Println("Teams notification is disabled or webhook URL is empty, skipping.")
 		return nil
 	}
 
+	// Run webhook notification asynchronously to avoid blocking the API response
+	go p.sendTeamsNotification(card)
+	return nil
+}
+
+// sendTeamsNotification sends the actual notification to Teams (runs in background)
+func (p *TeamsWebhookPublisher) sendTeamsNotification(card *models.Card) {
 	// Generate mentions and recipient text
 	recipientNames := make([]string, len(card.Recipients))
 	entities := make([]map[string]interface{}, len(card.Recipients))
@@ -58,27 +103,16 @@ func (p *TeamsWebhookPublisher) PublishCardCreated(card *models.Card) error {
 
 	recipientText := strings.Join(recipientNames, ", ")
 
-	// Build value badges as a ColumnSet for inline display
-	valueBadges := make([]map[string]interface{}, 0)
+	// Build value badges as clickable Action buttons with links
+	valueActions := make([]map[string]interface{}, 0)
 	for _, v := range card.Values {
-		valueBadges = append(valueBadges, map[string]interface{}{
-			"type":  "Column",
-			"width": "auto",
-			"items": []map[string]interface{}{
-				{
-					"type":                "TextBlock",
-					"text":                fmt.Sprintf("🏷️ %s", v.CompanyValue.Name),
-					"size":                "Small",
-					"weight":              "Bolder",
-					"color":               "Accent",
-					"horizontalAlignment": "Center",
-				},
-			},
-			"style":                    "emphasis",
-			"bleed":                    false,
-			"minHeight":                "24px",
-			"verticalContentAlignment": "Center",
-			"spacing":                  "Small",
+		// Use value ID in the URL query parameter
+		valueURL := fmt.Sprintf("http://localhost:3000/values?id=%s", v.CompanyValue.ID.String())
+
+		valueActions = append(valueActions, map[string]interface{}{
+			"type":  "Action.OpenUrl",
+			"title": fmt.Sprintf("🏷️ %s", v.CompanyValue.Name),
+			"url":   valueURL,
 		})
 	}
 
@@ -93,7 +127,7 @@ func (p *TeamsWebhookPublisher) PublishCardCreated(card *models.Card) error {
 						// Header with celebration banner
 						{
 							"type":    "Container",
-							"style":   "accent",
+							"style":   "emphasis",
 							"bleed":   true,
 							"spacing": "None",
 							"items": []map[string]interface{}{
@@ -121,13 +155,13 @@ func (p *TeamsWebhookPublisher) PublishCardCreated(card *models.Card) error {
 													"text":   "Recognition Card",
 													"size":   "Large",
 													"weight": "Bolder",
-													"color":  "Light",
+													"color":  "Accent",
 												},
 												{
 													"type":    "TextBlock",
 													"text":    "Someone did something amazing! ✨",
 													"size":    "Small",
-													"color":   "Light",
+													"color":   "Default",
 													"spacing": "None",
 												},
 											},
@@ -231,8 +265,8 @@ func (p *TeamsWebhookPublisher) PublishCardCreated(card *models.Card) error {
 									"color":  "Accent",
 								},
 								{
-									"type":    "ColumnSet",
-									"columns": valueBadges,
+									"type":    "ActionSet",
+									"actions": valueActions,
 									"spacing": "Small",
 								},
 							},
@@ -278,13 +312,13 @@ func (p *TeamsWebhookPublisher) PublishCardCreated(card *models.Card) error {
 						{
 							"type":  "Action.OpenUrl",
 							"title": "🏆 View Praise History",
-							"url":   "https://teams.microsoft.com/l/entity/com.castlery.thankyou/thankyou-tab?context={\"subEntityId\":\"history\"}",
-							"style": "positive",
+							"url":   "http://localhost:3000/profile",
 						},
 						{
 							"type":  "Action.OpenUrl",
 							"title": "✨ Send Praise",
-							"url":   "https://teams.microsoft.com/l/entity/com.castlery.thankyou/thankyou-tab?context={\"subEntityId\":\"create\"}",
+							"url":   "http://localhost:3000/dashboard?action=send-card",
+							"style": "positive",
 						},
 					},
 					"msteams": map[string]interface{}{
@@ -299,7 +333,8 @@ func (p *TeamsWebhookPublisher) PublishCardCreated(card *models.Card) error {
 
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
-		return fmt.Errorf("failed to marshal teams payload: %w", err)
+		log.Printf("Failed to marshal teams payload: %v", err)
+		return
 	}
 
 	// Simple retry logic (3 attempts)
@@ -310,7 +345,7 @@ func (p *TeamsWebhookPublisher) PublishCardCreated(card *models.Card) error {
 			defer resp.Body.Close()
 			if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 				log.Printf("Successfully published card creation to Teams: %s", card.ID)
-				return nil
+				return
 			}
 			lastErr = fmt.Errorf("teams webhook returned status: %d", resp.StatusCode)
 		} else {
@@ -321,5 +356,5 @@ func (p *TeamsWebhookPublisher) PublishCardCreated(card *models.Card) error {
 		time.Sleep(time.Duration(i+1) * time.Second)
 	}
 
-	return fmt.Errorf("failed to publish to Teams after 3 attempts: %w", lastErr)
+	log.Printf("Failed to publish to Teams after 3 attempts: %v", lastErr)
 }

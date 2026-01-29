@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import type { Card as CardType } from "@/services/api";
 import { format } from "date-fns";
 import { Calendar, User, Users, Quote, Heart } from "lucide-react";
+import { getValueBadgeClasses } from "@/constants/valueColors";
 
 interface CardDetailProps {
   card: CardType | null;
@@ -29,13 +30,13 @@ export const CardDetail: React.FC<CardDetailProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] bg-slate-950 border-slate-800 text-slate-100">
+      <DialogContent className="sm:max-w-[500px] bg-white border-gray-200 text-gray-900">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <Heart className="h-5 w-5 text-primary" fill="currentColor" />
+          <DialogTitle className="flex items-center gap-2 text-xl text-gray-800">
+            <Heart className="h-5 w-5 text-indigo-500" fill="currentColor" />
             Recognition Detail
           </DialogTitle>
-          <DialogDescription className="text-slate-400">
+          <DialogDescription className="text-gray-500">
             A token of gratitude shared within the team.
           </DialogDescription>
         </DialogHeader>
@@ -44,45 +45,45 @@ export const CardDetail: React.FC<CardDetailProps> = ({
           <div className="flex items-start justify-between">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-primary/10 text-primary">
+                <div className="p-2 rounded-full bg-indigo-50 text-indigo-500">
                   <User size={18} />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">
                     Sender
                   </p>
                   <div className="flex items-center gap-2 mt-1">
-                    <Avatar className="h-6 w-6">
-                      <AvatarFallback className="text-[10px] bg-primary/20">
+                    <Avatar className="h-6 w-6 border border-gray-200">
+                      <AvatarFallback className="text-[10px] bg-indigo-50 text-indigo-600">
                         {getInitials(card.senderId)}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="font-semibold">{card.senderName || card.senderId}</span>
+                    <span className="font-semibold text-gray-800">{card.senderName || card.senderId}</span>
                   </div>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-primary/10 text-primary">
+                <div className="p-2 rounded-full bg-indigo-50 text-indigo-500">
                   <Calendar size={18} />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">
                     Date Sent
                   </p>
-                  <p className="mt-1">
+                  <p className="mt-1 text-gray-700">
                     {format(new Date(card.createdAt), "MMMM do, yyyy")}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-center p-3 rounded-2xl bg-slate-900 border border-slate-800">
+            <div className="flex items-center justify-center p-3 rounded-2xl bg-gray-50 border border-gray-200">
               <div className="text-center">
-                <p className="text-[10px] font-bold text-slate-500 uppercase">
+                <p className="text-[10px] font-bold text-gray-400 uppercase">
                   Card ID
                 </p>
-                <p className="text-xs font-mono text-slate-300 mt-1">
+                <p className="text-xs font-mono text-gray-600 mt-1">
                   #{card.id.substring(0, 8)}
                 </p>
               </div>
@@ -90,42 +91,43 @@ export const CardDetail: React.FC<CardDetailProps> = ({
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-semibold text-slate-300">
-              <Users size={16} className="text-primary" />
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+              <Users size={16} className="text-indigo-500" />
               Recipients
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col gap-2">
               {card.recipients.map((recipient) => (
-                <Badge
-                  key={recipient.id}
-                  variant="secondary"
-                  className="bg-slate-900 text-slate-300 hover:bg-slate-800 border-slate-700"
-                >
-                  {recipient.name}
-                </Badge>
+                <div key={recipient.id} className="flex items-center gap-2">
+                  <Avatar className="h-6 w-6 border border-gray-200">
+                    <AvatarFallback className="text-[10px] bg-pink-50 text-pink-600">
+                      {getInitials(recipient.name || recipient.id)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm text-gray-700">{recipient.name}</span>
+                </div>
               ))}
             </div>
           </div>
 
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm font-semibold text-slate-300">
-              <Quote size={16} className="text-primary" />
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+              <Quote size={16} className="text-indigo-500" />
               Recognition Reason
             </div>
-            <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-800 italic text-slate-300 leading-relaxed shadow-inner">
+            <div className="p-4 rounded-xl bg-gray-50 border border-gray-200 italic text-gray-600 leading-relaxed">
               "{card.recognitionReason}"
             </div>
           </div>
 
           <div className="space-y-3">
-            <p className="text-sm font-semibold text-slate-300">
+            <p className="text-sm font-semibold text-gray-700">
               Associated Values
             </p>
             <div className="flex flex-wrap gap-2">
               {card.selectedValues.map((val) => (
                 <Badge
                   key={val.id}
-                  className="bg-primary/20 text-primary border-primary/30 hover:bg-primary/30"
+                  className={`border ${getValueBadgeClasses(val.name)}`}
                 >
                   {val.name}
                 </Badge>

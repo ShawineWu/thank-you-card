@@ -85,9 +85,10 @@ func (s *AnalyticsService) GetTopRecognizers(limit int) ([]dtos.TopRecognizerRes
 	results := make([]dtos.TopRecognizerResponse, len(data))
 	for i, r := range data {
 		results[i] = dtos.TopRecognizerResponse{
-			EmployeeID: r.EmployeeID,
-			CardsSent:  r.CardsSent,
-			Rank:       i + 1,
+			EmployeeID:   r.EmployeeID,
+			EmployeeName: r.EmployeeName,
+			CardsSent:    r.CardsSent,
+			Rank:         i + 1,
 		}
 	}
 

@@ -1,19 +1,22 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { api } from "@/services/api";
 import type { Card as RecognitionCard, ValueResponse, CardFilter } from "@/services/api";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { getValueColor, getValueBadgeClasses } from "@/constants/valueColors";
 
 export const Feed: React.FC = () => {
   const [cards, setCards] = useState<RecognitionCard[]>([]);
   const [values, setValues] = useState<ValueResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
-  const [filters, setFilters] = useState<CardFilter>({
-    page: 1,
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(1);
+  const [filters, setFilters] = useState<Omit<CardFilter, 'page'>>({
     pageSize: 20,
     search: "",
     senderId: "",
@@ -21,6 +24,7 @@ export const Feed: React.FC = () => {
     valueIds: [],
   });
   const [selectedValues, setSelectedValues] = useState<Set<string>>(new Set());
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchValues = async () => {
@@ -34,36 +38,83 @@ export const Feed: React.FC = () => {
     fetchValues();
   }, []);
 
-  const fetchCards = useCallback(async () => {
+  // 初始加载或筛选条件变化时重新加载
+  const fetchCards = useCallback(async (currentPage: number, append = false) => {
     try {
-      setLoading(true);
+      if (!append) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+      
       const res = await api.getCards({
         ...filters,
+        page: currentPage,
         valueIds: Array.from(selectedValues),
       });
-      setCards(res.data.data.data);
-      setTotalItems(res.data.data.pagination.totalItems);
+      
+      const newCards = res.data.data.data;
+      const pagination = res.data.data.pagination;
+      
+      if (append) {
+        setCards(prev => [...prev, ...newCards]);
+      } else {
+        setCards(newCards);
+      }
+      
+      setTotalItems(pagination.totalItems);
+      setHasMore(pagination.hasNext);
     } catch (error) {
       console.error("Failed to fetch cards:", error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }, [filters, selectedValues]);
 
+  // 筛选条件变化时重新加载
   useEffect(() => {
-    fetchCards();
+    setPage(1);
+    fetchCards(1, false);
   }, [fetchCards]);
 
+  // 加载更多
+  const loadMore = useCallback(() => {
+    if (!loadingMore && hasMore && !loading) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchCards(nextPage, true);
+    }
+  }, [loadingMore, hasMore, loading, page, fetchCards]);
+
+  // Intersection Observer 监听滚动到底部
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadingMore, loadMore]);
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilters((prev) => ({ ...prev, search: e.target.value, page: 1 }));
+    setFilters((prev) => ({ ...prev, search: e.target.value }));
   };
 
   const handleSenderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilters((prev) => ({ ...prev, senderId: e.target.value, page: 1 }));
+    setFilters((prev) => ({ ...prev, senderId: e.target.value }));
   };
 
   const handleRecipientChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilters((prev) => ({ ...prev, recipientId: e.target.value, page: 1 }));
+    setFilters((prev) => ({ ...prev, recipientId: e.target.value }));
   };
 
   const toggleValue = (valueId: string) => {
@@ -76,7 +127,6 @@ export const Feed: React.FC = () => {
       }
       return newSet;
     });
-    setFilters((prev) => ({ ...prev, page: 1 }));
   };
 
   const getRecipientNames = (card: RecognitionCard) => {
@@ -125,25 +175,69 @@ export const Feed: React.FC = () => {
         </div>
       </div>
 
-      {/* Value Tags Filter */}
-      <div>
-        <label className="text-sm font-medium mb-2 block">Filter by Values/Credos</label>
-        <div className="flex flex-wrap gap-2">
-          {values.map((value) => (
-            <Badge
-              key={value.id}
-              variant={selectedValues.has(value.id) ? "default" : "outline"}
-              className={`cursor-pointer transition-colors ${
-                selectedValues.has(value.id)
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-accent"
-              }`}
-              onClick={() => toggleValue(value.id)}
-            >
-              {value.name}
-            </Badge>
-          ))}
-        </div>
+      {/* Value Tags Filter - 分组显示 Credo 和 Value */}
+      <div className="space-y-3">
+        {/* Credo */}
+        {values.filter(v => v.type === 'Credo').length > 0 && (
+          <div>
+            <label className="text-sm font-medium mb-2 block">Filter by Credo</label>
+            <div className="flex flex-wrap gap-2">
+              {values.filter(v => v.type === 'Credo').map((value) => {
+                const color = getValueColor(value.name);
+                return (
+                  <div key={value.id} className="relative group">
+                    <Badge
+                      variant={selectedValues.has(value.id) ? "default" : "outline"}
+                      className={`cursor-pointer transition-colors ${
+                        selectedValues.has(value.id)
+                          ? `${color.bg} ${color.text} border ${color.border}`
+                          : `border ${color.border} ${color.text} ${color.bgHover}`
+                      }`}
+                      onClick={() => toggleValue(value.id)}
+                    >
+                      {value.name}
+                    </Badge>
+                    {/* Tooltip */}
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-popover border rounded-md shadow-lg text-sm w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 pointer-events-none">
+                      <p className="text-foreground">{value.description}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        
+        {/* Value */}
+        {values.filter(v => v.type === 'Value').length > 0 && (
+          <div>
+            <label className="text-sm font-medium mb-2 block">Filter by Value</label>
+            <div className="flex flex-wrap gap-2">
+              {values.filter(v => v.type === 'Value').map((value) => {
+                const color = getValueColor(value.name);
+                return (
+                  <div key={value.id} className="relative group">
+                    <Badge
+                      variant={selectedValues.has(value.id) ? "default" : "outline"}
+                      className={`cursor-pointer transition-colors ${
+                        selectedValues.has(value.id)
+                          ? `${color.bg} ${color.text} border ${color.border}`
+                          : `border ${color.border} ${color.text} ${color.bgHover}`
+                      }`}
+                      onClick={() => toggleValue(value.id)}
+                    >
+                      {value.name}
+                    </Badge>
+                    {/* Tooltip */}
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-popover border rounded-md shadow-lg text-sm w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 pointer-events-none">
+                      <p className="text-foreground">{value.description}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Results Count */}
@@ -186,23 +280,37 @@ export const Feed: React.FC = () => {
               </div>
               {card.selectedValues.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {card.selectedValues.map((value, index) => (
-                    <Badge
-                      key={value.id}
-                      className={`text-white text-xs font-medium px-3 py-1 ${
-                        index % 2 === 0
-                          ? "bg-blue-600 hover:bg-blue-700"
-                          : "bg-green-600 hover:bg-green-700"
-                      }`}
-                    >
-                      {value.name}
-                    </Badge>
+                  {card.selectedValues.map((value) => (
+                    <div key={value.id} className="relative group">
+                      <Badge
+                        className={`text-xs font-medium px-3 py-1 border ${getValueBadgeClasses(value.name)}`}
+                      >
+                        {value.name}
+                      </Badge>
+                      {/* Tooltip */}
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-popover border rounded-md shadow-lg text-sm w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 pointer-events-none">
+                        <p className="text-foreground">{value.description}</p>
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
             </div>
           ))
         )}
+        
+        {/* 加载更多触发器 */}
+        <div ref={loadMoreRef} className="py-4 flex justify-center">
+          {loadingMore && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>加载更多...</span>
+            </div>
+          )}
+          {!hasMore && cards.length > 0 && (
+            <p className="text-sm text-muted-foreground">已加载全部卡片</p>
+          )}
+        </div>
       </div>
     </div>
   );

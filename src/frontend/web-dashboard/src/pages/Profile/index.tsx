@@ -42,11 +42,41 @@ import {
 
 export const Profile: React.FC = () => {
   const { user } = useAuthStore();
-  const employeeId = user?.profile?.sub || "";
+  
+  // Microsoft ID (resolved from employee search)
+  const [microsoftId, setMicrosoftId] = useState<string>("");
 
   // Overview data
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
+
+  // Resolve Microsoft ID from user name
+  useEffect(() => {
+    const resolveMicrosoftId = async () => {
+      const userName = user?.profile?.name;
+      if (!userName) return;
+
+      try {
+        // Search for employee by name to get Microsoft ID
+        const res = await api.searchEmployees(userName);
+        const employees = res.data.data;
+        
+        // Find exact match by email or name
+        const userEmail = user?.profile?.email;
+        const matched = employees.find(
+          (emp) => emp.email === userEmail || emp.name === userName
+        );
+        
+        if (matched) {
+          setMicrosoftId(matched.id);
+        }
+      } catch (error) {
+        console.error("Failed to resolve Microsoft ID:", error);
+      }
+    };
+
+    resolveMicrosoftId();
+  }, [user?.profile?.name, user?.profile?.email]);
 
   // Received cards data
   const [receivedData, setReceivedData] = useState<PaginatedResponse<CardType> | null>(null);
@@ -63,10 +93,10 @@ export const Profile: React.FC = () => {
   // Fetch stats for Overview tab
   useEffect(() => {
     const fetchStats = async () => {
-      if (!employeeId) return;
+      if (!microsoftId) return;
       try {
         setLoadingStats(true);
-        const res = await api.getUserStats(employeeId);
+        const res = await api.getUserStats(microsoftId);
         setStats(res.data.data);
       } catch (error) {
         console.error("Failed to fetch user stats:", error);
@@ -76,12 +106,12 @@ export const Profile: React.FC = () => {
     };
 
     fetchStats();
-  }, [employeeId]);
+  }, [microsoftId]);
 
   // Fetch received cards
   const fetchReceivedCards = useCallback(
     async (pageNum: number, currentFilters: Partial<CardFilter>) => {
-      if (!employeeId) return;
+      if (!microsoftId) return;
 
       try {
         setLoadingReceived(true);
@@ -89,7 +119,7 @@ export const Profile: React.FC = () => {
           ...currentFilters,
           page: pageNum,
           pageSize: 10,
-          recipientId: employeeId,
+          recipientId: microsoftId,
         });
         setReceivedData(res.data.data);
       } catch (error) {
@@ -98,13 +128,13 @@ export const Profile: React.FC = () => {
         setLoadingReceived(false);
       }
     },
-    [employeeId]
+    [microsoftId]
   );
 
   // Fetch sent cards
   const fetchSentCards = useCallback(
     async (pageNum: number, currentFilters: Partial<CardFilter>) => {
-      if (!employeeId) return;
+      if (!microsoftId) return;
 
       try {
         setLoadingSent(true);
@@ -112,7 +142,7 @@ export const Profile: React.FC = () => {
           ...currentFilters,
           page: pageNum,
           pageSize: 10,
-          senderId: employeeId,
+          senderId: microsoftId,
         });
         setSentData(res.data.data);
       } catch (error) {
@@ -121,7 +151,7 @@ export const Profile: React.FC = () => {
         setLoadingSent(false);
       }
     },
-    [employeeId]
+    [microsoftId]
   );
 
   // Debounce received filters
@@ -485,12 +515,20 @@ export const Profile: React.FC = () => {
               </div>
 
               <div className="grid gap-3 pt-4 border-t border-gray-100">
+                {/* <div className="grid grid-cols-3 gap-4 py-2">
+                  <div className="text-sm font-medium text-gray-400">
+                    Hydra ID
+                  </div>
+                  <div className="col-span-2 text-sm text-gray-600 font-mono">
+                    {user?.profile?.sub || "N/A"}
+                  </div>
+                </div> */}
                 <div className="grid grid-cols-3 gap-4 py-2">
                   <div className="text-sm font-medium text-gray-400">
-                    User ID
+                    Microsoft ID
                   </div>
-                  <div className="col-span-2 text-sm text-gray-600">
-                    {user?.profile?.sub || "N/A"}
+                  <div className="col-span-2 text-sm text-gray-600 font-mono">
+                    {microsoftId || "Resolving..."}
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-4 py-2">
@@ -506,7 +544,7 @@ export const Profile: React.FC = () => {
                     Username
                   </div>
                   <div className="col-span-2 text-sm text-gray-600">
-                    {user?.profile?.preferred_username || "N/A"}
+                    {user?.profile?.name || "N/A"}
                   </div>
                 </div>
               </div>

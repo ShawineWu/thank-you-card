@@ -234,8 +234,8 @@ func (r *GormCardRepository) CountByRecipient(recipientID string) (int64, error)
 func (r *GormCardRepository) GetTopRecipients(limit int) ([]TopRecipient, error) {
 	var results []TopRecipient
 	err := r.db.Model(&models.CardRecipient{}).
-		Select("recipient_id as employee_id, count(*) as count").
-		Group("recipient_id").
+		Select("recipient_id as employee_id, recipient_name as employee_name, count(*) as count").
+		Group("recipient_id, recipient_name").
 		Order("count DESC").
 		Limit(limit).
 		Scan(&results).Error

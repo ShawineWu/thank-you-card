@@ -19,17 +19,42 @@ export const Dashboard: React.FC = () => {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [topEmployees, setTopEmployees] = useState<TopEmployee[]>([]);
   const [loading, setLoading] = useState(true);
+  const [microsoftId, setMicrosoftId] = useState<string>("");
 
-  const employeeId = user?.profile?.sub || "";
+  // Resolve Microsoft ID from user name
+  useEffect(() => {
+    const resolveMicrosoftId = async () => {
+      const userName = user?.profile?.name;
+      if (!userName) return;
+
+      try {
+        const res = await api.searchEmployees(userName);
+        const employees = res.data.data;
+        
+        const userEmail = user?.profile?.email;
+        const matched = employees.find(
+          (emp) => emp.email === userEmail || emp.name === userName
+        );
+        
+        if (matched) {
+          setMicrosoftId(matched.id);
+        }
+      } catch (error) {
+        console.error("Failed to resolve Microsoft ID:", error);
+      }
+    };
+
+    resolveMicrosoftId();
+  }, [user?.profile?.name, user?.profile?.email]);
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!employeeId) return;
+      if (!microsoftId) return;
 
       try {
         setLoading(true);
         const [statsRes, topRes] = await Promise.all([
-          api.getUserStats(employeeId),
+          api.getUserStats(microsoftId),
           api.getTopEmployees(5),
         ]);
 
@@ -43,9 +68,15 @@ export const Dashboard: React.FC = () => {
     };
 
     fetchData();
-  }, [employeeId]);
+  }, [microsoftId]);
 
-  const getInitials = (id: string) => id.substring(0, 2).toUpperCase();
+  const getInitials = (name: string) => {
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
 
   return (
     <div className="space-y-8">
@@ -154,12 +185,12 @@ export const Dashboard: React.FC = () => {
                     </div>
                     <Avatar className="h-9 w-9">
                       <AvatarFallback>
-                        {getInitials(emp.employeeId)}
+                        {getInitials(emp.employeeName || emp.employeeId)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="ml-4 space-y-1">
                       <p className="text-sm font-medium leading-none">
-                        {emp.employeeId}
+                        {emp.employeeName || emp.employeeId}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         Recognition received

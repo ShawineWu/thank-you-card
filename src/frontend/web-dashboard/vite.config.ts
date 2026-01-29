@@ -8,33 +8,6 @@ export default defineConfig({
   server: {
     host: true,
     port: 3000,
-    proxy: {
-      "/cards": {
-        target: "http://localhost:8080",
-        changeOrigin: true,
-        rewrite: (path) => "/api/v1" + path,
-      },
-      "/values": {
-        target: "http://localhost:8080",
-        changeOrigin: true,
-        rewrite: (path) => "/api/v1" + path,
-      },
-      "/statistics": {
-        target: "http://localhost:8080",
-        changeOrigin: true,
-        rewrite: (path) => "/api/v1" + path,
-      },
-      "/analytics": {
-        target: "http://localhost:8080",
-        changeOrigin: true,
-        rewrite: (path) => "/api/v1" + path,
-      },
-      "/employees": {
-        target: "http://localhost:8080",
-        changeOrigin: true,
-        rewrite: (path) => "/api/v1" + path,
-      },
-    },
   },
   resolve: {
     alias: {

@@ -5,5 +5,5 @@
   "PLAT_UMS_SERVER": "https://plat-ums-api.cslr.io",
   "LOGIN_CALLBACK_URL": "https://cowboy.castlery.com/callback",
   "LOGOUT_CALLBACK_URL": "https://cowboy.castlery.com",
-  "API_BASE_URL": "https://api.castlery.com"
+  "API_BASE_URL": "https://api.castlery.com/api/v1"
 }

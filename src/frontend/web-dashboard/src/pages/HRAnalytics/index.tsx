@@ -1,9 +1,10 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { api } from "@/services/api";
 import type {
   DashboardAnalytics,
   TopRecognizer,
   ValueDistribution,
+  Card as RecognitionCard,
 } from "@/services/api";
 import {
   Card,
@@ -14,6 +15,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import {
   PieChart,
   Pie,
@@ -31,6 +39,8 @@ import {
   TrendingUp,
   Tag,
 } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { getValueBadgeClasses, VALUE_COLOR_MAP, DEFAULT_VALUE_COLOR } from "@/constants/valueColors";
 
 type TabType = "dashboard" | "recognizers" | "teams" | "values";
 
@@ -308,73 +318,188 @@ const RecognizersTab: React.FC<{
   loading: boolean;
   topRecognizers: TopRecognizer[];
 }> = ({ loading, topRecognizers }) => {
-  // Mock employee data - in real app this would come from API
-  const recognizersWithDetails = useMemo(() => {
-    const mockDepartments = ["HR", "Engineering", "Engineering", "Sales", "Product", "Design", "Marketing", "Engineering", "HR", "Sales"];
-    const mockNames = [
-      "Mock HR Admin",
-      "Alice Smith",
-      "Bob Jones",
-      "Carol White",
-      "David Brown",
-      "Emma Davis",
-      "Frank Miller",
-      "Grace Wilson",
-      "Henry Taylor",
-      "Ivy Anderson",
-    ];
-    
-    return topRecognizers.map((r, index) => ({
-      ...r,
-      name: mockNames[index] || `Employee ${r.employeeId}`,
-      department: mockDepartments[index] || "Unknown",
-    }));
-  }, [topRecognizers]);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<{
+    employeeId: string;
+    name: string;
+  } | null>(null);
+  const [employeeCards, setEmployeeCards] = useState<{
+    sent: RecognitionCard[];
+    received: RecognitionCard[];
+  }>({ sent: [], received: [] });
+  const [cardsLoading, setCardsLoading] = useState(false);
+
+  const handleCardClick = useCallback(async (employee: {
+    employeeId: string;
+    name: string;
+  }) => {
+    setSelectedEmployee(employee);
+    setDrawerOpen(true);
+    setCardsLoading(true);
+
+    try {
+      const [sentRes, receivedRes] = await Promise.all([
+        api.getCards({ senderId: employee.employeeId, pageSize: 50 }),
+        api.getCards({ recipientId: employee.employeeId, pageSize: 50 }),
+      ]);
+      setEmployeeCards({
+        sent: sentRes.data.data.data,
+        received: receivedRes.data.data.data,
+      });
+    } catch (error) {
+      console.error("Failed to fetch employee cards:", error);
+    } finally {
+      setCardsLoading(false);
+    }
+  }, []);
+
+  const getRecipientNames = (card: RecognitionCard) => {
+    return card.recipients.map((r) => r.name).join(", ");
+  };
+
+  const renderCardItem = (card: RecognitionCard) => (
+    <div
+      key={card.id}
+      className="p-4 border border-gray-100 rounded-lg hover:shadow-sm transition-shadow"
+    >
+      <div className="flex items-center gap-2 mb-1">
+        <span className="font-semibold text-indigo-600">
+          {card.senderName || card.senderId}
+        </span>
+        <span className="text-gray-400">→</span>
+        <span className="font-semibold text-gray-900">{getRecipientNames(card)}</span>
+      </div>
+      <p className="text-xs text-gray-400 mb-2">
+        {formatDistanceToNow(new Date(card.createdAt), { addSuffix: true })}
+      </p>
+      <div className="text-sm text-gray-700 whitespace-pre-wrap mb-3">
+        {card.recognitionReason}
+      </div>
+      {card.selectedValues.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {card.selectedValues.map((value) => (
+            <Badge
+              key={value.id}
+              className={`text-xs font-medium px-2 py-0.5 border ${getValueBadgeClasses(value.name)}`}
+            >
+              {value.name}
+            </Badge>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 
   return (
-    <Card className="border border-gray-200 shadow-sm">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-gray-800">
-          <Users size={18} />
-          Most Active Recognizers
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-16 w-full" />
-            ))}
-          </div>
-        ) : recognizersWithDetails.length > 0 ? (
-          <div className="space-y-3">
-            {recognizersWithDetails.map((recognizer, index) => (
-              <div
-                key={recognizer.employeeId}
-                className="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors"
-              >
-                <div className="flex items-center gap-4">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    index < 3 ? "bg-indigo-100 text-indigo-600" : "bg-gray-100 text-gray-600"
-                  }`}>
-                    {index + 1}
+    <>
+      <Card className="border border-gray-200 shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-gray-800">
+            <Users size={18} />
+            Most Active Recognizers
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))}
+            </div>
+          ) : topRecognizers.length > 0 ? (
+            <div className="space-y-3">
+              {topRecognizers.map((recognizer, index) => (
+                <div
+                  key={recognizer.employeeId}
+                  className="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                      index < 3 ? "bg-indigo-100 text-indigo-600" : "bg-gray-100 text-gray-600"
+                    }`}>
+                      {index + 1}
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-900">
+                        {recognizer.employeeName || recognizer.employeeId}
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="font-medium text-gray-900">{recognizer.name}</div>
-                    <div className="text-sm text-gray-500">{recognizer.department}</div>
+                  <button
+                    onClick={() => handleCardClick({
+                      employeeId: recognizer.employeeId,
+                      name: recognizer.employeeName || recognizer.employeeId,
+                    })}
+                    className="text-indigo-600 font-medium hover:text-indigo-800 hover:underline cursor-pointer transition-colors"
+                  >
+                    {recognizer.cardsSent} cards
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-8 text-center text-gray-400">No data available</div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>{selectedEmployee?.name}</DrawerTitle>
+          </DrawerHeader>
+          <div className="p-6 space-y-6">
+            {cardsLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="p-4 border border-gray-100 rounded-lg">
+                    <Skeleton className="h-5 w-48 mb-2" />
+                    <Skeleton className="h-4 w-32 mb-3" />
+                    <Skeleton className="h-16 w-full" />
                   </div>
-                </div>
-                <div className="text-indigo-600 font-medium">
-                  {recognizer.cardsSent} cards
-                </div>
+                ))}
               </div>
-            ))}
+            ) : (
+              <>
+                {/* Sent Cards */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <span className="text-indigo-600">Sent</span>
+                    <span className="text-sm font-normal text-gray-500">
+                      ({employeeCards.sent.length} cards)
+                    </span>
+                  </h3>
+                  {employeeCards.sent.length > 0 ? (
+                    <div className="space-y-3">
+                      {employeeCards.sent.map(renderCardItem)}
+                    </div>
+                  ) : (
+                    <p className="text-gray-400 text-sm py-4 text-center">No sent cards</p>
+                  )}
+                </div>
+
+                {/* Received Cards */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <span className="text-emerald-600">Received</span>
+                    <span className="text-sm font-normal text-gray-500">
+                      ({employeeCards.received.length} cards)
+                    </span>
+                  </h3>
+                  {employeeCards.received.length > 0 ? (
+                    <div className="space-y-3">
+                      {employeeCards.received.map(renderCardItem)}
+                    </div>
+                  ) : (
+                    <p className="text-gray-400 text-sm py-4 text-center">No received cards</p>
+                  )}
+                </div>
+              </>
+            )}
           </div>
-        ) : (
-          <div className="py-8 text-center text-gray-400">No data available</div>
-        )}
-      </CardContent>
-    </Card>
+        </DrawerContent>
+      </Drawer>
+    </>
   );
 };
 
@@ -443,24 +568,26 @@ const TeamsTab: React.FC<{ loading: boolean }> = ({ loading }) => {
 };
 
 // Values Tab Component
-const VALUE_COLORS = [
-  "#6366f1", "#8b5cf6", "#ec4899", "#f43f5e", "#f59e0b",
-  "#10b981", "#06b6d4", "#3b82f6", "#a855f7", "#ef4444",
-  "#14b8a6", "#f97316",
-];
-
 const ValuesTab: React.FC<{
   loading: boolean;
   valueDistribution: ValueDistribution | null;
 }> = ({ loading, valueDistribution }) => {
   const wordCloudData = useMemo(() => {
     if (!valueDistribution) return [];
-    return valueDistribution.distribution.map((item, index) => ({
-      ...item,
-      color: VALUE_COLORS[index % VALUE_COLORS.length],
-      fontSize: Math.max(14, Math.min(48, item.percentage * 2)),
-    }));
+    return valueDistribution.distribution.map((item) => {
+      const colorConfig = VALUE_COLOR_MAP[item.valueName] || DEFAULT_VALUE_COLOR;
+      return {
+        ...item,
+        color: colorConfig.hex,
+        fontSize: Math.max(14, Math.min(48, item.percentage * 2)),
+      };
+    });
   }, [valueDistribution]);
+
+  const getChartColor = (valueName: string) => {
+    const colorConfig = VALUE_COLOR_MAP[valueName] || DEFAULT_VALUE_COLOR;
+    return colorConfig.hex;
+  };
 
   return (
     <Card className="border border-gray-200 shadow-sm">
@@ -510,8 +637,8 @@ const ValuesTab: React.FC<{
                       outerRadius={100}
                       dataKey="count"
                     >
-                      {valueDistribution?.distribution.map((_entry, index) => (
-                        <Cell key={`cell-${index}`} fill={VALUE_COLORS[index % VALUE_COLORS.length]} />
+                      {valueDistribution?.distribution.map((entry) => (
+                        <Cell key={`cell-${entry.valueId}`} fill={getChartColor(entry.valueName)} />
                       ))}
                     </Pie>
                     <Tooltip

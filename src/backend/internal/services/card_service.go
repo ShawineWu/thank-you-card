@@ -83,6 +83,17 @@ func (s *CardCreationService) CreateCard(
 		return nil, fmt.Errorf("failed to save card: %w", err)
 	}
 
+	// Populate CompanyValue data for webhook notification
+	valueMap := make(map[uuid.UUID]models.CompanyValue)
+	for _, v := range values {
+		valueMap[v.ID] = *v
+	}
+	for i := range card.Values {
+		if cv, ok := valueMap[card.Values[i].ValueID]; ok {
+			card.Values[i].CompanyValue = cv
+		}
+	}
+
 	// Publish event (synchronously as requested)
 	if err := s.eventPublisher.PublishCardCreated(card); err != nil {
 		// We log the error but don't fail the creation as the card is already saved
