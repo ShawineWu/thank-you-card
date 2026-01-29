@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { initConfigProcess } from "../app";
 
@@ -8,9 +8,16 @@ import { initConfigProcess } from "../app";
  */
 export function CallbackPage() {
   const navigate = useNavigate();
+  const processedRef = useRef(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleCallback = async () => {
+    // Prevent double execution in React Strict Mode
+    if (processedRef.current) return;
+    processedRef.current = true;
+
     try {
+      console.log("[Callback] Processing callback...");
       const auth = await initConfigProcess;
       const user = await auth.signinRedirectCallback();
 
@@ -27,20 +34,21 @@ export function CallbackPage() {
       } else {
         navigate("/dashboard", { replace: true });
       }
-    } catch (error) {
-      console.error("[Callback] Error processing callback:", error);
+    } catch (err) {
+      console.error("[Callback] Error processing callback:", err);
 
-      // Handle specific error cases
-      if (
-        error instanceof Error &&
-        error.message === "No matching state found in storage"
-      ) {
-        // State mismatch, redirect to home
-        navigate("/dashboard", { replace: true });
-      } else {
-        // Other errors, show error message or redirect to home
-        navigate("/dashboard", { replace: true });
+      let errorMessage = "Authentication failed. Please try again.";
+
+      if (err instanceof Error) {
+        if (err.message === "No matching state found in storage") {
+          errorMessage =
+            "Login session expired or invalid state. Please try logging in again.";
+        } else {
+          errorMessage = err.message;
+        }
       }
+
+      setError(errorMessage);
     }
   };
 
@@ -48,6 +56,42 @@ export function CallbackPage() {
     handleCallback();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  if (error) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          backgroundColor: "#f5f5f5",
+          padding: "20px",
+          textAlign: "center",
+        }}
+      >
+        <h2 style={{ color: "#d32f2f", marginBottom: "16px" }}>Login Failed</h2>
+        <p style={{ color: "#666", marginBottom: "24px", maxWidth: "400px" }}>
+          {error}
+        </p>
+        <button
+          onClick={() => navigate("/dashboard", { replace: true })}
+          style={{
+            padding: "10px 20px",
+            backgroundColor: "#1976d2",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+            fontSize: "16px",
+          }}
+        >
+          Return to Dashboard
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div

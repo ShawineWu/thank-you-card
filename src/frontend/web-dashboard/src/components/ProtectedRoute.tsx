@@ -27,6 +27,12 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
         const currentUser = await auth.getUser();
         console.log("[Auth] User retrieved:", currentUser ? "Found" : "Null");
 
+        if (!currentUser) {
+          console.log("[Auth] No user found, redirecting to login...");
+          await auth.login();
+          return;
+        }
+
         if (!isTokenValid(currentUser)) {
           // Token expired, try to refresh
           const now = Math.floor(Date.now() / 1000);
