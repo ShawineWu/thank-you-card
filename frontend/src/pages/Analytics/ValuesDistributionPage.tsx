@@ -12,6 +12,7 @@ import ValueDetailDialog from '@/components/CompanyValues/ValueDetailDialog'
 import { CompanyValueSummary, CompanyValueDetail } from '@/types/card'
 import { companyValuesApi } from '@/services/companyValues'
 import WordCloud from '@/components/Analytics/WordCloud'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 
 const ValuesDistributionPage = () => {
   const [from, setFrom] = useState<string>(
@@ -56,6 +57,27 @@ const ValuesDistributionPage = () => {
     value: item.count,
     percentage: item.percentage,
   })) || []
+
+  // Prepare pie chart data
+  const pieChartData = data?.map(item => ({
+    name: item.name,
+    value: item.count,
+    percentage: item.percentage,
+  })) || []
+
+  // Color palette for pie chart
+  const COLORS = [
+    '#3b82f6', // blue
+    '#10b981', // green
+    '#f59e0b', // amber
+    '#ef4444', // red
+    '#8b5cf6', // purple
+    '#ec4899', // pink
+    '#06b6d4', // cyan
+    '#f97316', // orange
+    '#6366f1', // indigo
+    '#14b8a6', // teal
+  ]
 
   const handleCardsClick = (valueId: number, valueName: string) => {
     setSelectedValue({ id: valueId, name: valueName })
@@ -115,7 +137,7 @@ const ValuesDistributionPage = () => {
         </CardContent>
       </Card>
 
-      {/* Word Cloud */}
+      {/* Word Cloud and Pie Chart */}
       {wordCloudData.length > 0 && (
         <Card className="mb-6">
           <CardHeader>
@@ -125,15 +147,98 @@ const ValuesDistributionPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <WordCloud
-              data={wordCloudData}
-              onClick={(item) => {
-                const valueItem = data?.find(d => d.name === item.text)
-                if (valueItem) {
-                  handleCardsClick(valueItem.valueId, valueItem.name)
-                }
-              }}
-            />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left: Word Cloud */}
+              <div>
+                <h3 className="text-sm font-semibold text-muted-foreground mb-4">Word Cloud</h3>
+                <WordCloud
+                  data={wordCloudData}
+                  onClick={(item) => {
+                    const valueItem = data?.find(d => d.name === item.text)
+                    if (valueItem) {
+                      handleCardsClick(valueItem.valueId, valueItem.name)
+                    }
+                  }}
+                />
+              </div>
+
+              {/* Right: Pie Chart */}
+              <div>
+                <h3 className="text-sm font-semibold text-muted-foreground mb-4">Distribution by Percentage</h3>
+                <ResponsiveContainer width="100%" height={400}>
+                  <PieChart>
+                    <Pie
+                      data={pieChartData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={120}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {pieChartData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={COLORS[index % COLORS.length]}
+                          onClick={() => {
+                            const valueItem = data?.find(d => d.name === entry.name)
+                            if (valueItem) {
+                              handleCardsClick(valueItem.valueId, valueItem.name)
+                            }
+                          }}
+                          style={{ cursor: 'pointer' }}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                        padding: '8px 12px',
+                      }}
+                      formatter={(value: number, name: string, props: any) => {
+                        const total = pieChartData.reduce((sum, item) => sum + item.value, 0)
+                        const percent = ((value / total) * 100).toFixed(1)
+                        return [`${value} cards (${percent}%)`, props.payload.name]
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                {/* Custom Legend */}
+                <div className="mt-4 space-y-2 max-h-[200px] overflow-y-auto">
+                  {pieChartData.map((entry, index) => {
+                    const total = pieChartData.reduce((sum, item) => sum + item.value, 0)
+                    const percent = ((entry.value / total) * 100).toFixed(1)
+                    return (
+                      <div 
+                        key={index} 
+                        className="flex items-center justify-between text-sm cursor-pointer hover:bg-accent/50 p-2 rounded transition-colors"
+                        onClick={() => {
+                          const valueItem = data?.find(d => d.name === entry.name)
+                          if (valueItem) {
+                            handleCardsClick(valueItem.valueId, valueItem.name)
+                          }
+                        }}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <div
+                            className="w-4 h-4 rounded"
+                            style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                          />
+                          <span className="text-foreground">{entry.name}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-muted-foreground">{entry.value} cards</span>
+                          <span className="text-muted-foreground font-medium">({percent}%)</span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}

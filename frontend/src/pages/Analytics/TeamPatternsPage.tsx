@@ -6,7 +6,7 @@ import { Loader2, Building2, Calendar } from 'lucide-react'
 import { format, subDays } from 'date-fns'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 
 const TeamPatternsPage = () => {
   const [from, setFrom] = useState<string>(
@@ -45,6 +45,26 @@ const TeamPatternsPage = () => {
     received: team.totalReceived,
     average: Number(team.averageCardsPerEmployee.toFixed(1)),
   })) || []
+
+  // Prepare pie chart data (showing distribution of cards sent by department)
+  const pieChartData = data?.map(team => ({
+    name: team.department,
+    value: team.totalSent,
+  })) || []
+
+  // Color palette for pie chart
+  const COLORS = [
+    '#3b82f6', // blue
+    '#10b981', // green
+    '#f59e0b', // amber
+    '#ef4444', // red
+    '#8b5cf6', // purple
+    '#ec4899', // pink
+    '#06b6d4', // cyan
+    '#f97316', // orange
+    '#6366f1', // indigo
+    '#14b8a6', // teal
+  ]
 
   return (
     <div>
@@ -89,7 +109,7 @@ const TeamPatternsPage = () => {
         </CardContent>
       </Card>
 
-      {/* Chart */}
+      {/* Charts */}
       {chartData.length > 0 && (
         <Card className="mb-6">
           <CardHeader>
@@ -99,17 +119,123 @@ const TeamPatternsPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="department" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="sent" fill="#8884d8" name="Cards Sent" />
-                <Bar dataKey="received" fill="#82ca9d" name="Cards Received" />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left: Bar Chart */}
+              <div>
+                <h3 className="text-sm font-semibold text-muted-foreground mb-4">Cards Sent & Received by Department</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart 
+                    data={chartData}
+                    margin={{ top: 10, right: 20, left: 0, bottom: 5 }}
+                    barCategoryGap="20%"
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.3} />
+                    <XAxis 
+                      dataKey="department" 
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                      axisLine={{ stroke: '#e5e7eb' }}
+                      tickLine={{ stroke: '#e5e7eb' }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                      axisLine={{ stroke: '#e5e7eb' }}
+                      tickLine={{ stroke: '#e5e7eb' }}
+                      width={60}
+                    />
+                    <Tooltip 
+                      contentStyle={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                        padding: '8px 12px',
+                      }}
+                      labelStyle={{ color: '#374151', fontWeight: 600, marginBottom: '4px' }}
+                      itemStyle={{ color: '#6b7280', padding: '2px 0' }}
+                    />
+                    <Legend 
+                      wrapperStyle={{ paddingTop: '20px' }}
+                      iconType="rect"
+                      iconSize={12}
+                      formatter={(value) => <span style={{ color: '#374151', fontSize: '13px' }}>{value}</span>}
+                    />
+                    <Bar 
+                      dataKey="sent" 
+                      fill="#3b82f6" 
+                      name="Cards Sent"
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar 
+                      dataKey="received" 
+                      fill="#10b981" 
+                      name="Cards Received"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Right: Pie Chart */}
+              <div>
+                <h3 className="text-sm font-semibold text-muted-foreground mb-4">Cards Sent Distribution</h3>
+                <ResponsiveContainer width="100%" height={250}>
+                  <PieChart>
+                    <Pie
+                      data={pieChartData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={90}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {pieChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                        padding: '8px 12px',
+                      }}
+                      formatter={(value: number, name: string, props: any) => {
+                        const total = pieChartData.reduce((sum, item) => sum + item.value, 0)
+                        const percent = ((value / total) * 100).toFixed(1)
+                        return [`${value} cards (${percent}%)`, props.payload.name]
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                {/* Custom Legend */}
+                <div className="mt-4 space-y-2">
+                  {pieChartData.map((entry, index) => {
+                    const total = pieChartData.reduce((sum, item) => sum + item.value, 0)
+                    const percent = ((entry.value / total) * 100).toFixed(1)
+                    return (
+                      <div key={index} className="flex items-center justify-between text-sm">
+                        <div className="flex items-center space-x-2">
+                          <div
+                            className="w-4 h-4 rounded"
+                            style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                          />
+                          <span className="text-foreground">{entry.name}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-muted-foreground">{entry.value} cards</span>
+                          <span className="text-muted-foreground font-medium">({percent}%)</span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}

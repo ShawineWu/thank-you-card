@@ -16,6 +16,7 @@ interface EmployeeCardsDialogProps {
   from?: string
   to?: string
   onValueClick?: (value: CompanyValueSummary) => void
+  showFilters?: boolean // 是否显示过滤器，默认 true
 }
 
 const EmployeeCardsDialog = ({
@@ -26,6 +27,7 @@ const EmployeeCardsDialog = ({
   from,
   to,
   onValueClick,
+  showFilters = true, // 默认显示过滤器
 }: EmployeeCardsDialogProps) => {
   const [selectedValueIds, setSelectedValueIds] = useState<number[]>([])
   const [selectedSenderIds, setSelectedSenderIds] = useState<number[]>([])
@@ -147,113 +149,115 @@ const EmployeeCardsDialog = ({
             </div>
           ) : data && data.items.length > 0 ? (
             <>
-              {/* Filters */}
-              <div className="mb-6 space-y-6">
-                {/* Value Statistics and Filters */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-foreground">Filter by Values/Credos</h3>
+              {/* Filters - 只在 showFilters 为 true 时显示 */}
+              {showFilters && (
+                <div className="mb-6 space-y-6">
+                  {/* Value Statistics and Filters */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-foreground">Filter by Values/Credos</h3>
+                    </div>
+                    <div className="flex flex-wrap gap-2.5">
+                      {Array.from(valueCounts.values())
+                        .sort((a, b) => b.count - a.count) // Sort by count descending
+                        .map(({ value, count }) => {
+                          const isSelected = selectedValueIds.includes(value.id)
+                          const variant = value.type === 'VALUE' ? 'default' : 'success'
+                          
+                          return (
+                            <button
+                              key={value.id}
+                              onClick={() => handleValueToggle(value.id)}
+                              className={`group relative inline-flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-200 ${
+                                isSelected
+                                  ? variant === 'default'
+                                    ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                                    : 'bg-green-600 text-white border-green-600 shadow-sm'
+                                  : 'bg-background hover:bg-accent border-border hover:border-primary/50'
+                              }`}
+                            >
+                              <span className={`text-sm font-medium ${isSelected ? 'text-inherit' : 'text-foreground'}`}>
+                                {value.name}
+                              </span>
+                              <span
+                                className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-xs font-semibold ${
+                                  isSelected
+                                    ? 'bg-white/20 text-inherit'
+                                    : 'bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'
+                                }`}
+                              >
+                                {count}
+                              </span>
+                            </button>
+                          )
+                        })}
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-2.5">
-                    {Array.from(valueCounts.values())
-                      .sort((a, b) => b.count - a.count) // Sort by count descending
-                      .map(({ value, count }) => {
-                        const isSelected = selectedValueIds.includes(value.id)
-                        const variant = value.type === 'VALUE' ? 'default' : 'success'
-                        
-                        return (
-                          <button
-                            key={value.id}
-                            onClick={() => handleValueToggle(value.id)}
-                            className={`group relative inline-flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-200 ${
-                              isSelected
-                                ? variant === 'default'
+
+                  {/* User Statistics and Filters */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-foreground">Filter by Sender</h3>
+                      {hasActiveFilters && (
+                        <button
+                          onClick={handleClearFilters}
+                          className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                          Clear filters
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-2.5">
+                      {Array.from(senderCounts.values())
+                        .sort((a, b) => b.count - a.count) // Sort by count descending
+                        .map(({ sender, count }) => {
+                          const isSelected = selectedSenderIds.includes(sender.id)
+                          
+                          return (
+                            <button
+                              key={sender.id}
+                              onClick={() => handleSenderToggle(sender.id)}
+                              className={`group relative inline-flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-200 ${
+                                isSelected
                                   ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-                                  : 'bg-green-600 text-white border-green-600 shadow-sm'
-                                : 'bg-background hover:bg-accent border-border hover:border-primary/50'
-                            }`}
-                          >
-                            <span className={`text-sm font-medium ${isSelected ? 'text-inherit' : 'text-foreground'}`}>
-                              {value.name}
-                            </span>
-                            <span
-                              className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-xs font-semibold ${
-                                isSelected
-                                  ? 'bg-white/20 text-inherit'
-                                  : 'bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'
+                                  : 'bg-background hover:bg-accent border-border hover:border-primary/50'
                               }`}
                             >
-                              {count}
-                            </span>
-                          </button>
-                        )
-                      })}
+                              <User className={`h-3.5 w-3.5 ${isSelected ? 'text-inherit' : 'text-muted-foreground'}`} />
+                              <span className={`text-sm font-medium ${isSelected ? 'text-inherit' : 'text-foreground'}`}>
+                                {sender.name}
+                              </span>
+                              <span
+                                className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-xs font-semibold ${
+                                  isSelected
+                                    ? 'bg-white/20 text-inherit'
+                                    : 'bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'
+                                }`}
+                              >
+                                {count}
+                              </span>
+                            </button>
+                          )
+                        })}
+                    </div>
                   </div>
+
+                  {hasActiveFilters && (
+                    <div className="flex items-center gap-2 pt-2 border-t">
+                      <p className="text-xs text-muted-foreground">
+                        Showing <span className="font-semibold text-foreground">{filteredCards.length}</span> of{' '}
+                        <span className="font-semibold text-foreground">{data.items.length}</span> cards
+                      </p>
+                    </div>
+                  )}
                 </div>
+              )}
 
-                {/* User Statistics and Filters */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-foreground">Filter by Sender</h3>
-                    {hasActiveFilters && (
-                      <button
-                        onClick={handleClearFilters}
-                        className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                        Clear filters
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-2.5">
-                    {Array.from(senderCounts.values())
-                      .sort((a, b) => b.count - a.count) // Sort by count descending
-                      .map(({ sender, count }) => {
-                        const isSelected = selectedSenderIds.includes(sender.id)
-                        
-                        return (
-                          <button
-                            key={sender.id}
-                            onClick={() => handleSenderToggle(sender.id)}
-                            className={`group relative inline-flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-200 ${
-                              isSelected
-                                ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-                                : 'bg-background hover:bg-accent border-border hover:border-primary/50'
-                            }`}
-                          >
-                            <User className={`h-3.5 w-3.5 ${isSelected ? 'text-inherit' : 'text-muted-foreground'}`} />
-                            <span className={`text-sm font-medium ${isSelected ? 'text-inherit' : 'text-foreground'}`}>
-                              {sender.name}
-                            </span>
-                            <span
-                              className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-xs font-semibold ${
-                                isSelected
-                                  ? 'bg-white/20 text-inherit'
-                                  : 'bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'
-                              }`}
-                            >
-                              {count}
-                            </span>
-                          </button>
-                        )
-                      })}
-                  </div>
-                </div>
-
-                {hasActiveFilters && (
-                  <div className="flex items-center gap-2 pt-2 border-t">
-                    <p className="text-xs text-muted-foreground">
-                      Showing <span className="font-semibold text-foreground">{filteredCards.length}</span> of{' '}
-                      <span className="font-semibold text-foreground">{data.items.length}</span> cards
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Filtered Cards List */}
+              {/* Cards List */}
               <div className="space-y-4">
-                {filteredCards.length > 0 ? (
-                  filteredCards.map((card: CardResponse) => (
+                {(showFilters ? filteredCards : data.items).length > 0 ? (
+                  (showFilters ? filteredCards : data.items).map((card: CardResponse) => (
                     <CardItem 
                       key={card.id} 
                       card={card} 
@@ -264,7 +268,7 @@ const EmployeeCardsDialog = ({
                 ) : (
                   <div className="text-center py-8">
                     <p className="text-muted-foreground">
-                      No cards match the selected filters.
+                      {showFilters ? 'No cards match the selected filters.' : 'No cards found.'}
                     </p>
                   </div>
                 )}

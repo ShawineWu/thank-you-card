@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from './ui/button'
-import { Heart, Home, Plus, Inbox, BarChart3, TrendingUp, Settings, BookOpen, LogOut } from 'lucide-react'
+import { Heart, Home, Plus, LayoutDashboard, Settings, BookOpen, LogOut } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
 const Layout = () => {
@@ -9,10 +9,9 @@ const Layout = () => {
   const navigate = useNavigate()
 
   const navItems = [
-    { path: '/', label: 'Feed', icon: Home },
+    { path: '/', label: 'Overview', icon: LayoutDashboard },
+    { path: '/feed', label: 'Feed', icon: Home },
     { path: '/create', label: 'Create Card', icon: Plus },
-    { path: '/stats', label: 'Stats', icon: BarChart3 },
-    { path: '/top-employees', label: 'Top 10', icon: TrendingUp },
     { path: '/company-values', label: 'Values', icon: BookOpen },
   ]
 
@@ -23,7 +22,7 @@ const Layout = () => {
 
   const isActive = (path: string) => {
     if (path === '/') {
-      return location.pathname === '/'
+      return location.pathname === '/' || location.pathname === '/overview'
     }
     return location.pathname.startsWith(path)
   }

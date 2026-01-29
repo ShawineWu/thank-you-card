@@ -1,4 +1,6 @@
 import { useMemo } from 'react'
+// @ts-ignore - adorable-word-cloud types may not be perfect
+import { AdorableWordCloud, CloudWord, Options, Callbacks } from 'adorable-word-cloud'
 
 interface WordCloudItem {
   text: string
@@ -12,31 +14,15 @@ interface WordCloudProps {
 }
 
 const WordCloud = ({ data, onClick }: WordCloudProps) => {
-  // Calculate min and max values for scaling
-  const { minValue, maxValue } = useMemo(() => {
-    if (data.length === 0) return { minValue: 0, maxValue: 0 }
-    const values = data.map(item => item.value)
-    return {
-      minValue: Math.min(...values),
-      maxValue: Math.max(...values),
-    }
+  // Convert data to CloudWord format
+  const words: CloudWord[] = useMemo(() => {
+    return data.map(item => ({
+      text: item.text,
+      value: item.value,
+    }))
   }, [data])
 
-  // Calculate font size based on value (scaled between 14px and 48px)
-  const getFontSize = (value: number) => {
-    if (maxValue === minValue) return 24
-    const ratio = (value - minValue) / (maxValue - minValue)
-    return 14 + ratio * 34 // Range: 14px to 48px
-  }
-
-  // Calculate opacity based on value (scaled between 0.6 and 1.0)
-  const getOpacity = (value: number) => {
-    if (maxValue === minValue) return 0.8
-    const ratio = (value - minValue) / (maxValue - minValue)
-    return 0.6 + ratio * 0.4 // Range: 0.6 to 1.0
-  }
-
-  // Color palette
+  // Color palette matching the original design
   const colors = [
     '#3b82f6', // blue
     '#10b981', // green
@@ -50,7 +36,48 @@ const WordCloud = ({ data, onClick }: WordCloudProps) => {
     '#14b8a6', // teal
   ]
 
-  const getColor = (index: number) => colors[index % colors.length]
+  // Calculate min and max values for font size scaling
+  const { minValue, maxValue } = useMemo(() => {
+    if (data.length === 0) return { minValue: 0, maxValue: 0 }
+    const values = data.map(item => item.value)
+    return {
+      minValue: Math.min(...values),
+      maxValue: Math.max(...values),
+    }
+  }, [data])
+
+  // Configure options for the word cloud
+  const options: Options = useMemo(() => {
+    // Calculate font size range based on data
+    const baseMinSize = 20
+    const baseMaxSize = 60
+    const sizeRange = maxValue > minValue 
+      ? [baseMinSize, baseMaxSize] 
+      : [baseMinSize, baseMinSize + 20]
+
+    return {
+      colors: colors,
+      fontFamily: 'system-ui, -apple-system, sans-serif',
+      fontSizeRange: sizeRange as [number, number],
+      rotationDivision: 0.5, // Allow random rotations (0-0.5 means -90 to 90 degrees)
+      spiral: 'archimedean', // Use archimedean spiral for better layout
+      padding: 5,
+    }
+  }, [maxValue, minValue])
+
+  // Configure callbacks
+  const callbacks: Callbacks = useMemo(() => {
+    if (!onClick) return {}
+    
+    return {
+      onWordClick: (word: CloudWord) => {
+        const item = data.find(d => d.text === word.text)
+        if (item) {
+          onClick(item)
+        }
+      },
+    }
+  }, [onClick, data])
 
   if (data.length === 0) {
     return (
@@ -61,30 +88,12 @@ const WordCloud = ({ data, onClick }: WordCloudProps) => {
   }
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-4 p-8 min-h-[400px]">
-      {data.map((item, index) => {
-        const fontSize = getFontSize(item.value)
-        const opacity = getOpacity(item.value)
-        const color = getColor(index)
-
-        return (
-          <button
-            key={index}
-            onClick={() => onClick?.(item)}
-            className="transition-all duration-200 hover:scale-110 hover:opacity-100"
-            style={{
-              fontSize: `${fontSize}px`,
-              opacity,
-              color,
-              fontWeight: item.value === maxValue ? 700 : item.value > (minValue + maxValue) / 2 ? 600 : 500,
-              cursor: onClick ? 'pointer' : 'default',
-            }}
-            title={`${item.text}: ${item.value} cards (${item.percentage.toFixed(1)}%)`}
-          >
-            {item.text}
-          </button>
-        )
-      })}
+    <div className="w-full" style={{ height: '500px' }}>
+      <AdorableWordCloud 
+        words={words} 
+        options={options} 
+        callbacks={callbacks}
+      />
     </div>
   )
 }

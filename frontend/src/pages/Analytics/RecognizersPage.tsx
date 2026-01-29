@@ -7,12 +7,23 @@ import { Loader2, Users, Calendar } from 'lucide-react'
 import { format, subDays } from 'date-fns'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import SenderCardsDialog from '@/components/Analytics/SenderCardsDialog'
+import { CompanyValueSummary, CompanyValueDetail } from '@/types/card'
+import { companyValuesApi } from '@/services/companyValues'
+import ValueDetailDialog from '@/components/CompanyValues/ValueDetailDialog'
 
 const RecognizersPage = () => {
   const [from, setFrom] = useState<string>(
     format(subDays(new Date(), 30), 'yyyy-MM-dd')
   )
   const [to, setTo] = useState<string>(format(new Date(), 'yyyy-MM-dd'))
+  const [selectedSender, setSelectedSender] = useState<{
+    id: number
+    name: string
+  } | null>(null)
+  const [cardsDialogOpen, setCardsDialogOpen] = useState(false)
+  const [selectedValue, setSelectedValue] = useState<CompanyValueDetail | null>(null)
+  const [valueDialogOpen, setValueDialogOpen] = useState(false)
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['analytics', 'recognizers', from, to],
@@ -37,6 +48,21 @@ const RecognizersPage = () => {
         <p className="text-destructive">Failed to load data. Please try again.</p>
       </div>
     )
+  }
+
+  const handleCardsClick = (senderId: number, senderName: string) => {
+    setSelectedSender({ id: senderId, name: senderName })
+    setCardsDialogOpen(true)
+  }
+
+  const handleValueClick = async (value: CompanyValueSummary) => {
+    try {
+      const valueDetail = await companyValuesApi.getById(value.id)
+      setSelectedValue(valueDetail)
+      setValueDialogOpen(true)
+    } catch (error) {
+      console.error('Failed to load value details:', error)
+    }
   }
 
   return (
@@ -109,7 +135,11 @@ const RecognizersPage = () => {
                       </div>
                     </div>
                   </div>
-                  <Badge variant="secondary" className="text-base px-3 py-1">
+                  <Badge 
+                    variant="secondary" 
+                    className="text-base px-3 py-1 cursor-pointer hover:bg-secondary/80 transition-colors"
+                    onClick={() => handleCardsClick(recognizer.employeeId, recognizer.name)}
+                  >
                     {recognizer.count} {recognizer.count === 1 ? 'card' : 'cards'}
                   </Badge>
                 </div>
@@ -122,6 +152,26 @@ const RecognizersPage = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Sender Cards Dialog */}
+      {selectedSender && (
+        <SenderCardsDialog
+          senderId={selectedSender.id}
+          senderName={selectedSender.name}
+          open={cardsDialogOpen}
+          onOpenChange={setCardsDialogOpen}
+          from={from}
+          to={to}
+          onValueClick={handleValueClick}
+        />
+      )}
+
+      {/* Value Detail Dialog */}
+      <ValueDetailDialog
+        value={selectedValue}
+        open={valueDialogOpen}
+        onOpenChange={setValueDialogOpen}
+      />
     </div>
   )
 }
