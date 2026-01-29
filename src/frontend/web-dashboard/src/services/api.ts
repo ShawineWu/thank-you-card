@@ -31,10 +31,30 @@ export interface ValueResponse {
   type: string;
 }
 
+export interface Employee {
+  id: string;
+  aadId?: string;
+  name: string;
+  email: string;
+  department: string;
+}
+
+export interface CreateCardRequest {
+  recipients: Array<{ id: string; name: string }>;
+  recognitionReason: string;
+  valueIds: string[];
+}
+
+export interface Recipient {
+  id: string;
+  name: string;
+}
+
 export interface Card {
   id: string;
   senderId: string;
-  recipients: string[];
+  senderName: string;
+  recipients: Recipient[];
   recognitionReason: string;
   selectedValues: ValueResponse[];
   createdAt: string;
@@ -165,4 +185,24 @@ export const api = {
     authorizedAxios.post("/analytics/export", request, {
       responseType: "blob",
     }),
+
+  // Card creation and employee search
+  createCard: (request: CreateCardRequest) =>
+    authorizedAxios.post<StandardResponse<Card>>("/cards", request),
+
+  generateRecognitionReason: (request: {
+    keyInfo: string;
+    valueNames: string[];
+    senderName: string;
+    recipientNames: string[];
+  }) =>
+    authorizedAxios.post<StandardResponse<{ recognitionReason: string }>>(
+      "/cards/generate-reason",
+      request,
+    ),
+
+  searchEmployees: (query: string) =>
+    authorizedAxios.get<StandardResponse<Employee[]>>(
+      `/employees/search?q=${encodeURIComponent(query)}`,
+    ),
 };

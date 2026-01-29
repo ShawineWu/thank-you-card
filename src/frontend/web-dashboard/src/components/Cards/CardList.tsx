@@ -116,11 +116,11 @@ export const CardList: React.FC<CardListProps> = ({
                     <div className="flex flex-wrap gap-1">
                       {card.recipients.slice(0, 2).map((r) => (
                         <Badge
-                          key={r}
+                          key={r.id}
                           variant="outline"
                           className="text-[10px] py-0 px-2 border-slate-700 bg-slate-900"
                         >
-                          {r}
+                          {r.name}
                         </Badge>
                       ))}
                       {card.recipients.length > 2 && (

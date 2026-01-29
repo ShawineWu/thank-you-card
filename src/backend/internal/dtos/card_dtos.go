@@ -9,13 +9,26 @@ import (
 // CreateCardRequest defines the payload for creating a new card
 type CreateCardRequest struct {
 	Recipients        []RecipientRequest `json:"recipients" binding:"required,min=1"`
-	RecognitionReason string             `json:"recognitionReason" binding:"required,min=10,max=1000"`
+	RecognitionReason string             `json:"recognitionReason" binding:"required,min=30,max=1000"`
 	ValueIDs          []string           `json:"valueIds" binding:"required,min=1,max=3"`
 }
 
 type RecipientRequest struct {
 	ID   string `json:"id" binding:"required"`
 	Name string `json:"name" binding:"required"`
+}
+
+// GenerateReasonRequest defines the payload for generating recognition reason via DeepSeek
+type GenerateReasonRequest struct {
+	KeyInfo        string   `json:"keyInfo" binding:"required"`
+	ValueNames     []string `json:"valueNames" binding:"required,min=1,max=3"`
+	SenderName     string   `json:"senderName" binding:"required"`
+	RecipientNames []string `json:"recipientNames" binding:"required,min=1"`
+}
+
+// GenerateReasonResponse returns the generated recognition reason text
+type GenerateReasonResponse struct {
+	RecognitionReason string `json:"recognitionReason"`
 }
 
 // EmployeeDTO represents an employee from the directory

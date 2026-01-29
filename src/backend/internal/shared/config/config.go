@@ -43,6 +43,8 @@ type ExternalConfig struct {
 	AzureTenantID        string
 	AzureClientID        string
 	AzureClientSecret    string
+	DeepSeekAPIKey       string
+	DeepSeekBaseURL      string
 }
 
 // Load loads configuration from environment variables
@@ -72,6 +74,8 @@ func Load() (*Config, error) {
 			AzureTenantID:        getEnv("AZURE_TENANT_ID", ""),
 			AzureClientID:        getEnv("AZURE_CLIENT_ID", ""),
 			AzureClientSecret:    getEnv("AZURE_CLIENT_SECRET", ""),
+			DeepSeekAPIKey:       getEnv("DEEPSEEK_API_KEY", ""),
+			DeepSeekBaseURL:      getEnv("DEEPSEEK_BASE_URL", "https://api.deepseek.com"),
 		},
 	}
 

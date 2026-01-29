@@ -94,7 +94,13 @@ func main() {
 	analyticsCache := cache.NewInMemoryCache()
 
 	// 7. Initialize handlers
-	cardHandler := handlers.NewCardHandler(cardCreationService, cardRepo, employeeService)
+	cardHandler := handlers.NewCardHandler(
+		cardCreationService,
+		cardRepo,
+		employeeService,
+		cfg.External.DeepSeekAPIKey,
+		cfg.External.DeepSeekBaseURL,
+	)
 	statsHandler := handlers.NewStatisticsHandler(statsService)
 	valueHandler := handlers.NewValueHandler(valueRepo)
 	analyticsHandler := handlers.NewAnalyticsHandler(analyticsService, exportService, analyticsCache)
@@ -132,6 +138,7 @@ func main() {
 		cards := api.Group("/cards")
 		{
 			cards.POST("", cardHandler.CreateCard)
+			cards.POST("/generate-reason", cardHandler.GenerateRecognitionReason)
 			cards.GET("", cardHandler.GetCards)
 			cards.GET("/received", cardHandler.GetReceivedCards)
 			cards.GET("/sent", cardHandler.GetSentCards)

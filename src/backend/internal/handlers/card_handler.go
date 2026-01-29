@@ -1,7 +1,11 @@
 package handlers
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"math"
 	"net/http"
 	"strings"
@@ -22,6 +26,8 @@ type CardHandler struct {
 	cardCreationService *services.CardCreationService
 	cardRepo            repositories.CardRepository
 	employeeService     services.EmployeeService
+	deepSeekAPIKey      string
+	deepSeekBaseURL     string
 }
 
 // NewCardHandler creates a new card handler
@@ -29,11 +35,17 @@ func NewCardHandler(
 	cardCreationService *services.CardCreationService,
 	cardRepo repositories.CardRepository,
 	employeeService services.EmployeeService,
+	deepSeekAPIKey, deepSeekBaseURL string,
 ) *CardHandler {
+	if deepSeekBaseURL == "" {
+		deepSeekBaseURL = "https://api.deepseek.com"
+	}
 	return &CardHandler{
 		cardCreationService: cardCreationService,
 		cardRepo:            cardRepo,
 		employeeService:     employeeService,
+		deepSeekAPIKey:      deepSeekAPIKey,
+		deepSeekBaseURL:     strings.TrimSuffix(deepSeekBaseURL, "/"),
 	}
 }
 
@@ -92,6 +104,125 @@ func (h *CardHandler) CreateCard(c *gin.Context) {
 	}
 
 	h.successResponse(c, http.StatusCreated, h.mapCardToResponse(card), "Card created successfully")
+}
+
+// deepSeekChatRequest is OpenAI-compatible chat request
+type deepSeekChatRequest struct {
+	Model     string                `json:"model"`
+	Messages  []deepSeekChatMessage `json:"messages"`
+	MaxTokens int                   `json:"max_tokens,omitempty"`
+}
+
+type deepSeekChatMessage struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
+// deepSeekChatResponse is OpenAI-compatible chat response
+type deepSeekChatResponse struct {
+	Choices []struct {
+		Message struct {
+			Content string `json:"content"`
+		} `json:"message"`
+	} `json:"choices"`
+}
+
+// GenerateRecognitionReason handles POST /api/v1/cards/generate-reason
+func (h *CardHandler) GenerateRecognitionReason(c *gin.Context) {
+	if h.deepSeekAPIKey == "" {
+		h.errorResponse(c, http.StatusServiceUnavailable, "DEEPSEEK_DISABLED", "Recognition reason generation is not configured", nil)
+		return
+	}
+
+	var req dtos.GenerateReasonRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.errorResponse(c, http.StatusBadRequest, "VALIDATION_ERROR", "Invalid request body", err.Error())
+		return
+	}
+
+	recipientList := strings.Join(req.RecipientNames, ", ")
+	valueList := strings.Join(req.ValueNames, ", ")
+
+	systemPrompt := `你的角色：你是一位资深的人力资源专家，正在推行 thank you card 项目让员工之间表达日常工作支持的感激，你懂得如何将公司文化价值观与员工事例做紧密贴合。`
+	userPrompt := fmt.Sprintf(`你的任务：根据以下信息，生成一段用于感谢同事的 thank you card 内容。
+
+发件人：%s
+接收人：%s
+用户输入的关键信息：%s
+用户输入的价值观及信条：%s
+
+生成结果的要求：
+- 语言要温暖、真诚、充满感激之情
+- 要体现对接收人的认可和赞美（内容必须是发件人感谢接收人，不要搞错发件人和接收人）
+- 将用户已经选择的价值观及信条自然地融入文本中
+- 长度控制在300-500字之间
+- 使用中文或英文（根据用户输入的语言选择）
+- 语气要自然、亲切，不要太正式
+- 使用 STAR 原则
+
+请直接输出感谢文本，不要包含其他说明文字。`, req.SenderName, recipientList, req.KeyInfo, valueList)
+
+	body := deepSeekChatRequest{
+		Model: "deepseek-chat",
+		Messages: []deepSeekChatMessage{
+			{Role: "system", Content: systemPrompt},
+			{Role: "user", Content: userPrompt},
+		},
+		MaxTokens: 800,
+	}
+	bodyBytes, err := json.Marshal(body)
+	if err != nil {
+		h.errorResponse(c, http.StatusInternalServerError, "GENERATE_FAILED", "Failed to build request", err.Error())
+		return
+	}
+
+	url := h.deepSeekBaseURL + "/v1/chat/completions"
+	httpReq, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(bodyBytes))
+	if err != nil {
+		h.errorResponse(c, http.StatusInternalServerError, "GENERATE_FAILED", "Failed to create request", err.Error())
+		return
+	}
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Authorization", "Bearer "+h.deepSeekAPIKey)
+
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		log.Printf("DeepSeek request error: %v", err)
+		h.errorResponse(c, http.StatusBadGateway, "GENERATE_FAILED", "Failed to call DeepSeek", err.Error())
+		return
+	}
+	defer resp.Body.Close()
+
+	respBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		h.errorResponse(c, http.StatusInternalServerError, "GENERATE_FAILED", "Failed to read response", err.Error())
+		return
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("DeepSeek API error: status=%d body=%s", resp.StatusCode, string(respBytes))
+		h.errorResponse(c, http.StatusBadGateway, "GENERATE_FAILED", "DeepSeek API returned an error", string(respBytes))
+		return
+	}
+
+	var chatResp deepSeekChatResponse
+	if err := json.Unmarshal(respBytes, &chatResp); err != nil {
+		h.errorResponse(c, http.StatusInternalServerError, "GENERATE_FAILED", "Failed to parse DeepSeek response", err.Error())
+		return
+	}
+
+	if len(chatResp.Choices) == 0 {
+		h.errorResponse(c, http.StatusInternalServerError, "GENERATE_FAILED", "No content in DeepSeek response", nil)
+		return
+	}
+
+	reason := strings.TrimSpace(chatResp.Choices[0].Message.Content)
+	if len(reason) > 1000 {
+		reason = reason[:1000]
+	}
+
+	h.successResponse(c, http.StatusOK, dtos.GenerateReasonResponse{RecognitionReason: reason}, "")
 }
 
 // SearchEmployees handles GET /api/employees/search

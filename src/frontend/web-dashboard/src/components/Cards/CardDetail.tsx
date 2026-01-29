@@ -57,7 +57,7 @@ export const CardDetail: React.FC<CardDetailProps> = ({
                         {getInitials(card.senderId)}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="font-semibold">{card.senderId}</span>
+                    <span className="font-semibold">{card.senderName || card.senderId}</span>
                   </div>
                 </div>
               </div>
@@ -97,11 +97,11 @@ export const CardDetail: React.FC<CardDetailProps> = ({
             <div className="flex flex-wrap gap-2">
               {card.recipients.map((recipient) => (
                 <Badge
-                  key={recipient}
+                  key={recipient.id}
                   variant="secondary"
                   className="bg-slate-900 text-slate-300 hover:bg-slate-800 border-slate-700"
                 >
-                  {recipient}
+                  {recipient.name}
                 </Badge>
               ))}
             </div>

@@ -13,8 +13,8 @@ type Card struct {
 	SenderID          string          `gorm:"type:varchar(255);not null;index" json:"senderId"`
 	SenderName        string          `gorm:"type:varchar(255)" json:"senderName"`
 	RecognitionReason string          `gorm:"type:text;not null" json:"recognitionReason"`
-	Recipients        []CardRecipient `gorm:"foreignKey:CardID;constraint:OnDelete:CASCADE" json:"recipients"`
-	Values            []CardValue     `gorm:"foreignKey:CardID;constraint:OnDelete:CASCADE" json:"values"`
+	Recipients        []CardRecipient `gorm:"foreignKey:CardID" json:"recipients"`
+	Values            []CardValue     `gorm:"foreignKey:CardID" json:"values"`
 	CreatedAt         time.Time       `gorm:"not null;index:idx_cards_created_at,sort:desc" json:"createdAt"`
 	UpdatedAt         time.Time       `gorm:"not null" json:"updatedAt"`
 }
@@ -58,7 +58,7 @@ var (
 	ErrNoRecipients       = errors.New("at least one recipient is required")
 	ErrSenderAsRecipient  = errors.New("sender cannot be a recipient")
 	ErrDuplicateRecipient = errors.New("duplicate recipients found")
-	ErrInvalidReason      = errors.New("recognition reason must be between 10 and 1000 characters")
+	ErrInvalidReason      = errors.New("recognition reason must be between 30 and 1000 characters")
 	ErrInvalidValueCount  = errors.New("must select 1-3 company values")
 	ErrDuplicateValue     = errors.New("duplicate values found")
 )
@@ -91,7 +91,7 @@ func (c *Card) Validate() error {
 
 	// Validate recognition reason
 	reasonLen := len(c.RecognitionReason)
-	if reasonLen < 10 || reasonLen > 1000 {
+	if reasonLen < 30 || reasonLen > 1000 {
 		return ErrInvalidReason
 	}
 
