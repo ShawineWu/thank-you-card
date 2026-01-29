@@ -1,0 +1,63 @@
+/**
+ * SkeletonLoader Styles
+ * 
+ * Provides shimmer loading animation effects for skeleton placeholders
+ * Uses GPU-accelerated animations for smooth performance
+ * Uses Fluent UI theme tokens for theme-aware colors
+ */
+
+.skeleton-loader {
+  background-color: var(--colorNeutralBackground3);
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  will-change: background-position;
+}
+
+/* Wave animation (shimmer effect) */
+.skeleton-wave {
+  background: linear-gradient(
+    90deg,
+    var(--colorNeutralBackground3) 0%,
+    var(--colorNeutralBackground2) 20%,
+    var(--colorNeutralBackground1) 60%,
+    var(--colorNeutralBackground3) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 2s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Pulse animation */
+.skeleton-pulse {
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-wave,
+  .skeleton-pulse {
+    animation: none;
+  }
+  
+  .skeleton-loader {
+    background: var(--colorNeutralBackground3);
+  }
+}

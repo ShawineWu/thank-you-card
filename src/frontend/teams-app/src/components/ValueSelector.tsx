@@ -8,6 +8,7 @@ import {
   Tooltip,
 } from "@fluentui/react-components";
 import { CheckmarkCircleFilled } from "@fluentui/react-icons";
+import { SkeletonLoader } from "./SkeletonLoader";
 import type { CompanyValue } from "../types";
 
 const useStyles = makeStyles({
@@ -27,6 +28,18 @@ const useStyles = makeStyles({
     marginTop: tokens.spacingVerticalXS,
     fontSize: tokens.fontSizeBase200,
     color: tokens.colorNeutralForeground3,
+  },
+  loadingContainer: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: tokens.spacingHorizontalS,
+    marginTop: tokens.spacingVerticalS,
+    opacity: 0,
+    animation: "fadeIn 300ms ease-in-out forwards",
+  },
+  valuesLoaded: {
+    opacity: 0,
+    animation: "fadeIn 400ms ease-in-out forwards",
   },
 });
 
@@ -67,11 +80,18 @@ export const ValueSelector: React.FC<ValueSelectorProps> = ({
       validationState={error ? "error" : "none"}
       className={styles.field}
     >
-      <div className={styles.valueContainer}>
-        {loading ? (
-          <Text>Loading values...</Text>
-        ) : (
-          values.map((value) => {
+      {loading ? (
+        <div className={styles.loadingContainer}>
+          <SkeletonLoader variant="rectangular" width="120px" height="32px" />
+          <SkeletonLoader variant="rectangular" width="120px" height="32px" />
+          <SkeletonLoader variant="rectangular" width="120px" height="32px" />
+          <SkeletonLoader variant="rectangular" width="120px" height="32px" />
+          <SkeletonLoader variant="rectangular" width="120px" height="32px" />
+          <SkeletonLoader variant="rectangular" width="120px" height="32px" />
+        </div>
+      ) : (
+        <div className={`${styles.valueContainer} ${styles.valuesLoaded}`}>
+          {values.map((value) => {
             const isSelected = selectedValueIds.includes(value.id);
             const isDisabled = !isSelected && selectedValueIds.length >= 3;
 
@@ -94,9 +114,9 @@ export const ValueSelector: React.FC<ValueSelectorProps> = ({
                 </ToggleButton>
               </Tooltip>
             );
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
 
       <Text className={styles.hint}>
         Select 1-3 values ({selectedValueIds.length}/3 selected)
