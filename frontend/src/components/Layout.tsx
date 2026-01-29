@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from './ui/button'
-import { Heart, Home, Plus, LayoutDashboard, Settings, BookOpen, LogOut } from 'lucide-react'
+import { Heart, Home, Send, LayoutDashboard, Settings, BookOpen, LogOut } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
 const Layout = () => {
@@ -11,7 +11,7 @@ const Layout = () => {
   const navItems = [
     { path: '/', label: 'Overview', icon: LayoutDashboard },
     { path: '/feed', label: 'Feed', icon: Home },
-    { path: '/create', label: 'Create Card', icon: Plus },
+    { path: '/create', label: 'Send', icon: Send },
     { path: '/company-values', label: 'Values', icon: BookOpen },
   ]
 
