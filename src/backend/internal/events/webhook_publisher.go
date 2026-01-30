@@ -124,65 +124,6 @@ func (p *TeamsWebhookPublisher) sendTeamsNotification(card *models.Card) {
 				"content": map[string]interface{}{
 					"type": "AdaptiveCard",
 					"body": []map[string]interface{}{
-						// Header with celebration banner
-						{
-							"type":    "Container",
-							"style":   "emphasis",
-							"bleed":   true,
-							"spacing": "None",
-							"items": []map[string]interface{}{
-								{
-									"type": "ColumnSet",
-									"columns": []map[string]interface{}{
-										{
-											"type":  "Column",
-											"width": "auto",
-											"items": []map[string]interface{}{
-												{
-													"type": "TextBlock",
-													"text": "🎉",
-													"size": "ExtraLarge",
-												},
-											},
-											"verticalContentAlignment": "Center",
-										},
-										{
-											"type":  "Column",
-											"width": "stretch",
-											"items": []map[string]interface{}{
-												{
-													"type":   "TextBlock",
-													"text":   "Recognition Card",
-													"size":   "Large",
-													"weight": "Bolder",
-													"color":  "Accent",
-												},
-												{
-													"type":    "TextBlock",
-													"text":    "Someone did something amazing! ✨",
-													"size":    "Small",
-													"color":   "Default",
-													"spacing": "None",
-												},
-											},
-											"verticalContentAlignment": "Center",
-										},
-										{
-											"type":  "Column",
-											"width": "auto",
-											"items": []map[string]interface{}{
-												{
-													"type": "TextBlock",
-													"text": "🎊",
-													"size": "ExtraLarge",
-												},
-											},
-											"verticalContentAlignment": "Center",
-										},
-									},
-								},
-							},
-						},
 						// Recipient section
 						{
 							"type":    "Container",
@@ -210,7 +151,7 @@ func (p *TeamsWebhookPublisher) sendTeamsNotification(card *models.Card) {
 											"items": []map[string]interface{}{
 												{
 													"type":   "TextBlock",
-													"text":   "🌟 Congratulations!",
+													"text":   "Recognition Card",
 													"size":   "Large",
 													"weight": "Bolder",
 													"color":  "Accent",

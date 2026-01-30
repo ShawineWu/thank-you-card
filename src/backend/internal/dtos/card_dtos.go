@@ -75,12 +75,12 @@ type PaginationParams struct {
 // CardFilterParams represents the query parameters for filtering cards
 type CardFilterParams struct {
 	PaginationParams
-	SenderID    string      `form:"senderId"`
-	RecipientID string      `form:"recipientId"`
-	ValueIDs    []uuid.UUID `form:"valueIds[]"`
-	StartDate   string      `form:"startDate"`
-	EndDate     string      `form:"endDate"`
-	Search      string      `form:"search"`
+	SenderID    string   `form:"senderId"`
+	RecipientID string   `form:"recipientId"`
+	ValueIDs    []string `form:"valueIds[]"`
+	StartDate   string   `form:"startDate"`
+	EndDate     string   `form:"endDate"`
+	Search      string   `form:"search"`
 }
 
 // PaginationResponse metadata for paginated results

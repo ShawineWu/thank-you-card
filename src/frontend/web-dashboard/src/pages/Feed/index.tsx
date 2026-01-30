@@ -1,10 +1,9 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { api } from "@/services/api";
-import type { Card as RecognitionCard, ValueResponse, CardFilter } from "@/services/api";
-import { Input } from "@/components/ui/input";
+import type { Card as RecognitionCard, ValueResponse } from "@/services/api";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { getValueColor, getValueBadgeClasses } from "@/constants/valueColors";
 
@@ -16,15 +15,9 @@ export const Feed: React.FC = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
-  const [filters, setFilters] = useState<Omit<CardFilter, 'page'>>({
-    pageSize: 20,
-    search: "",
-    senderId: "",
-    recipientId: "",
-    valueIds: [],
-  });
   const [selectedValues, setSelectedValues] = useState<Set<string>>(new Set());
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  const pageSize = 20;
 
   useEffect(() => {
     const fetchValues = async () => {
@@ -48,8 +41,8 @@ export const Feed: React.FC = () => {
       }
       
       const res = await api.getCards({
-        ...filters,
         page: currentPage,
+        pageSize,
         valueIds: Array.from(selectedValues),
       });
       
@@ -70,7 +63,7 @@ export const Feed: React.FC = () => {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [filters, selectedValues]);
+  }, [selectedValues]);
 
   // 筛选条件变化时重新加载
   useEffect(() => {
@@ -105,18 +98,6 @@ export const Feed: React.FC = () => {
     return () => observer.disconnect();
   }, [hasMore, loading, loadingMore, loadMore]);
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilters((prev) => ({ ...prev, search: e.target.value }));
-  };
-
-  const handleSenderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilters((prev) => ({ ...prev, senderId: e.target.value }));
-  };
-
-  const handleRecipientChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilters((prev) => ({ ...prev, recipientId: e.target.value }));
-  };
-
   const toggleValue = (valueId: string) => {
     setSelectedValues((prev) => {
       const newSet = new Set(prev);
@@ -143,7 +124,7 @@ export const Feed: React.FC = () => {
       </div>
 
       {/* Search */}
-      <div className="relative">
+      {/* <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search cards..."
@@ -151,10 +132,10 @@ export const Feed: React.FC = () => {
           onChange={handleSearchChange}
           className="pl-10 bg-background border-border"
         />
-      </div>
+      </div> */}
 
       {/* Sender and Recipient Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="text-sm font-medium mb-2 block">Filter by Sender</label>
           <Input
@@ -173,7 +154,7 @@ export const Feed: React.FC = () => {
             className="bg-background border-border"
           />
         </div>
-      </div>
+      </div> */}
 
       {/* Value Tags Filter - 分组显示 Credo 和 Value */}
       <div className="space-y-3">

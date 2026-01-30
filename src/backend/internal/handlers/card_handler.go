@@ -269,10 +269,24 @@ func (h *CardHandler) GetCards(c *gin.Context) {
 		endDate = &params.EndDate
 	}
 
+	// Convert string valueIds to UUID
+	valueUUIDs := make([]uuid.UUID, 0, len(params.ValueIDs))
+	for _, valueIDStr := range params.ValueIDs {
+		if valueIDStr == "" {
+			continue
+		}
+		valueUUID, err := uuid.Parse(valueIDStr)
+		if err != nil {
+			h.errorResponse(c, http.StatusBadRequest, "INVALID_VALUE_ID", fmt.Sprintf("Invalid value ID format: %s", valueIDStr), err.Error())
+			return
+		}
+		valueUUIDs = append(valueUUIDs, valueUUID)
+	}
+
 	cards, total, err := h.cardRepo.FindWithFilters(
 		params.SenderID,
 		params.RecipientID,
-		params.ValueIDs,
+		valueUUIDs,
 		startDate,
 		endDate,
 		params.Search,
@@ -332,10 +346,24 @@ func (h *CardHandler) GetReceivedCards(c *gin.Context) {
 		endDate = &params.EndDate
 	}
 
+	// Convert string valueIds to UUID
+	valueUUIDs := make([]uuid.UUID, 0, len(params.ValueIDs))
+	for _, valueIDStr := range params.ValueIDs {
+		if valueIDStr == "" {
+			continue
+		}
+		valueUUID, err := uuid.Parse(valueIDStr)
+		if err != nil {
+			h.errorResponse(c, http.StatusBadRequest, "INVALID_VALUE_ID", fmt.Sprintf("Invalid value ID format: %s", valueIDStr), err.Error())
+			return
+		}
+		valueUUIDs = append(valueUUIDs, valueUUID)
+	}
+
 	cards, total, err := h.cardRepo.FindWithFilters(
 		params.SenderID,
 		userID, // Force current user as recipient
-		params.ValueIDs,
+		valueUUIDs,
 		startDate,
 		endDate,
 		params.Search,
@@ -372,10 +400,24 @@ func (h *CardHandler) GetSentCards(c *gin.Context) {
 		endDate = &params.EndDate
 	}
 
+	// Convert string valueIds to UUID
+	valueUUIDs := make([]uuid.UUID, 0, len(params.ValueIDs))
+	for _, valueIDStr := range params.ValueIDs {
+		if valueIDStr == "" {
+			continue
+		}
+		valueUUID, err := uuid.Parse(valueIDStr)
+		if err != nil {
+			h.errorResponse(c, http.StatusBadRequest, "INVALID_VALUE_ID", fmt.Sprintf("Invalid value ID format: %s", valueIDStr), err.Error())
+			return
+		}
+		valueUUIDs = append(valueUUIDs, valueUUID)
+	}
+
 	cards, total, err := h.cardRepo.FindWithFilters(
 		userID, // Force current user as sender
 		params.RecipientID,
-		params.ValueIDs,
+		valueUUIDs,
 		startDate,
 		endDate,
 		params.Search,

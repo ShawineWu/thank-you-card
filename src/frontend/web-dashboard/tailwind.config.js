@@ -58,6 +58,18 @@ export default {
     				'3': 'hsl(var(--chart-3))',
     				'4': 'hsl(var(--chart-4))',
     				'5': 'hsl(var(--chart-5))'
+    			},
+    			// Castlery brand colors
+    			castlery: {
+    				black: '#1A1A1A',
+    				charcoal: '#2D2D2D',
+    				'warm-gray': '#6B6B6B',
+    				'light-gray': '#E8E4E0',
+    				cream: '#FAF8F5',
+    				'warm-white': '#FFFDF9',
+    				accent: '#C4A77D',
+    				'accent-dark': '#A68B5B',
+    				'accent-light': '#D4C4A8',
     			}
     		},
     		borderRadius: {
